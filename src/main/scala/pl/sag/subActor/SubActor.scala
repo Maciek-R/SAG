@@ -1,22 +1,25 @@
 package pl.sag.subActor
 
 import akka.actor.Actor
-import pl.sag.{CollectData, SendCollectedProductsInfo}
+import pl.sag.product.ProductsInfo
+import pl.sag.utils.XKomClient
+import pl.sag.{CollectData, SendCollectedProductsInfoToMainActor}
 
 import scala.util.Random
 
 class SubActor extends Actor {
   private val random = new Random
+  val xKomClient = new XKomClient
 
   override def receive: Receive = {
     case CollectData => collectData()
   }
 
   def collectData() = {
-    val numbers = for{
-      i <- 0 until 5
-    } yield random.nextInt(20)
-
-    sender ! SendCollectedProductsInfo(numbers.toSeq)
+    println(s"SubActor ${self.path.name} started downloading products.")
+    val products = xKomClient.downloadRandomProducts(2)
+    //    .map(_.copy(description = None))
+    println(s"SubActor ${self.path.name} downloaded products.")
+    sender ! SendCollectedProductsInfoToMainActor(ProductsInfo(products))
   }
 }

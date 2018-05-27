@@ -2,7 +2,7 @@ package pl.sag.utils
 
 object XKomParser {
 
-  val productDescriptionStartMark = "Opis produktu"
+  val productDescriptionStartMark = "Opis produktu" //Some products dont have it - filter it
   val productDescriptionEndMark = "Specyfikacja"
 
   val dataCategory = "<li data-category-id"

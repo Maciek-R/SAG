@@ -1,6 +1,6 @@
 package pl.sag.product
 
-case class ProductsInfo (info: Seq[Int])
+case class ProductsInfo (productsInfo: List[ProductInfo])
 
 case class ProductInfo(
   linkPage: String,
