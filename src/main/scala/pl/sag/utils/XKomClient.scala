@@ -1,6 +1,9 @@
 package pl.sag.utils
 
+import pl.sag.product.ProductInfo
 import pl.sag.utils.HttpClient._
+
+import scala.util.Random
 
 object XKomClient {
 
@@ -42,5 +45,42 @@ object XKomClient {
   def getProductInfo(productUrl: String) = {
     val pageSource = HttpClient.downloadPageSource(productUrl)
     XKomParser.getProductInfo(pageSource)
+  }
+
+  def downloadRandomProducts(numberOfProducts: Int): List[ProductInfo] = {
+    val categoriesLinks = XKomClient.getAllCategoriesLinks(XKomMainPage.toString)
+
+    var categoriesToProductsLinks = scala.collection.mutable.HashMap[String, List[String]]()
+
+    val r = new Random
+
+    def getProductLinks(category: String) = {
+      categoriesToProductsLinks.get(category) match {
+        case Some(productLinks) => productLinks
+        case None => {
+          categoriesToProductsLinks += ((category, XKomClient.getAllProductsLinks(category)))
+          categoriesToProductsLinks(category)
+        }
+      }
+    }
+
+    val randomCategories = for {
+      i <- 0 until numberOfProducts
+      category = categoriesLinks(r.nextInt(categoriesLinks.length))
+    } yield category
+
+    val randomProductsLinksFromCategories = for {
+      category <- randomCategories
+      productLinks = getProductLinks(category)
+      randomProductLink = productLinks(r.nextInt(productLinks.length))
+    } yield randomProductLink
+
+    randomProductsLinksFromCategories
+      .map(link =>
+        ProductInfo(
+          link,
+          Some(XKomClient.getProductInfo(link))
+        )
+      ).toList
   }
 }
