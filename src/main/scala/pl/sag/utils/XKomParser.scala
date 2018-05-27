@@ -1,8 +1,15 @@
 package pl.sag.utils
 
-import pl.sag.utils.XKomClient.{productDescriptionEndMark, productDescriptionStartMark}
-
 object XKomParser {
+
+  val productDescriptionStartMark = "Opis produktu"
+  val productDescriptionEndMark = "Specyfikacja"
+
+  val dataCategory = "<li data-category-id"
+  val dataCategoryMark = "li"
+
+  val productItem = "<div class=\"product-item"
+  val productItemMark = "div"
 
   def getProductInfo(pageSource: String) = {
     val fullProductDescription = pageSource.substring(

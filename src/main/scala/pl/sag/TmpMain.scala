@@ -5,7 +5,8 @@ import pl.sag.utils._
 
 object TmpMain extends App{
 
-  val products = XKomClient.downloadRandomProducts(5)
+  val xKomClient = new XKomClient
+  val products = xKomClient.downloadRandomProducts(3)
   products.zipWithIndex.foreach{case (product, index) => println(s"$index  $product")}
 
   /*val categoriesLinks = XKomClient.getAllCategoriesLinks(XKomMainPage.toString)

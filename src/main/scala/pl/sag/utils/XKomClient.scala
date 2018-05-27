@@ -5,65 +5,60 @@ import pl.sag.utils.HttpClient._
 
 import scala.util.Random
 
-object XKomClient {
+class XKomClient {
+  val categoriesLinks = getAllCategoriesLinks(XKomMainPage.toString)
+  var categoriesToProductsLinks = scala.collection.mutable.HashMap[String, List[String]]()
+  val r = new Random
 
-  val productDescriptionStartMark = "Opis produktu"
-  val productDescriptionEndMark = "Specyfikacja"
-
-  val dataCategory = "<li data-category-id"
-  val dataCategoryMark = "li"
-
-  val productItem = "<div class=\"product-item"
-  val productItemMark = "div"
-
-  def getAllCategoriesLinks(pageUrl: String) = {
+  private def getAllCategoriesLinks(pageUrl: String) = {
     XKomParser.getAllInfoInsideMarkWithText(
       HttpClient.downloadPageSource(pageUrl),
-      dataCategoryMark,
-      dataCategory
+      XKomParser.dataCategoryMark,
+      XKomParser.dataCategory
     ).map(XKomMainPage.toString+XKomParser.getLinkInText(_))
   }
 
-  def getAllProductsLinks(categoryUrl: String) = {
-    def getAllPageSources(page: Int): List[String] = {
+  private def getAllProductsLinks(categoryUrl: String) = {
+    def getAllPagesSources(page: Int): List[String] = {
       val pageSource = HttpClient.downloadPageSource(categoryUrl+"?page="+page+"&per_page=90")
         pageSource.indexOf("Niestety nie znaleźliśmy tego czego szukasz") match {
-          case -1 => pageSource :: getAllPageSources(page + 1)
+          case -1 => pageSource :: getAllPagesSources(page + 1)
           case _ => Nil
         }
     }
 
-    getAllPageSources(1).flatMap{
-      pageSource => XKomParser.getAllInfoInsideMarkWithText(
-        pageSource,
-        productItemMark,
-        productItem
-      )
-    }.map(XKomMainPage.toString+XKomParser.getLinkInText(_))
+    categoriesToProductsLinks.get(categoryUrl) match {
+      case Some(productLinks) => productLinks
+      case None => {
+        val allCategoryProducts = getAllPagesSources(1).flatMap{
+          pageSource => XKomParser.getAllInfoInsideMarkWithText(
+            pageSource,
+            XKomParser.productItemMark,
+            XKomParser.productItem
+          )
+        }.map(XKomMainPage.toString+XKomParser.getLinkInText(_))
+        categoriesToProductsLinks += (categoryUrl -> allCategoryProducts)
+      }
+    }
+    categoriesToProductsLinks(categoryUrl)
   }
 
-  def getProductInfo(productUrl: String) = {
+  private def getProductInfo(productUrl: String) = {
     val pageSource = HttpClient.downloadPageSource(productUrl)
     XKomParser.getProductInfo(pageSource)
   }
 
-  def downloadRandomProducts(numberOfProducts: Int): List[ProductInfo] = {
-    val categoriesLinks = XKomClient.getAllCategoriesLinks(XKomMainPage.toString)
-
-    var categoriesToProductsLinks = scala.collection.mutable.HashMap[String, List[String]]()
-
-    val r = new Random
-
-    def getProductLinks(category: String) = {
-      categoriesToProductsLinks.get(category) match {
-        case Some(productLinks) => productLinks
-        case None => {
-          categoriesToProductsLinks += ((category, XKomClient.getAllProductsLinks(category)))
-          categoriesToProductsLinks(category)
-        }
+  private def getProductLinks(category: String) = {
+    categoriesToProductsLinks.get(category) match {
+      case Some(productLinks) => productLinks
+      case None => {
+        categoriesToProductsLinks += (category -> getAllProductsLinks(category))
+        categoriesToProductsLinks(category)
       }
     }
+  }
 
+  def downloadRandomProducts(numberOfProducts: Int): List[ProductInfo] = {
     val randomCategories = for {
       i <- 0 until numberOfProducts
       category = categoriesLinks(r.nextInt(categoriesLinks.length))
@@ -79,7 +74,7 @@ object XKomClient {
       .map(link =>
         ProductInfo(
           link,
-          Some(XKomClient.getProductInfo(link))
+          Some(getProductInfo(link))
         )
       ).toList
   }
