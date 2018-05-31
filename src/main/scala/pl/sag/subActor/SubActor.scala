@@ -1,5 +1,5 @@
 package pl.sag.subActor
-
+import pl.sag.Logger._
 import akka.actor.Actor
 import pl.sag.product.ProductsInfo
 import pl.sag.utils.XKomClient
@@ -16,10 +16,10 @@ class SubActor extends Actor {
   }
 
   def collectData() = {
-    println(s"SubActor ${self.path.name} started downloading products.")
+    log(s"SubActor ${self.path.name} started downloading products.")
     val products = xKomClient.downloadRandomProducts(2)
-    //    .map(_.copy(description = None))
-    println(s"SubActor ${self.path.name} downloaded products.")
+
+    log(s"SubActor ${self.path.name} downloaded products.")
     sender ! SendCollectedProductsInfoToMainActor(ProductsInfo(products))
   }
 }

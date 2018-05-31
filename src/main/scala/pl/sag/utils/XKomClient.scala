@@ -14,28 +14,29 @@ class XKomClient {
       HttpClient.downloadPageSource(pageUrl),
       XKomParser.dataCategoryMark,
       XKomParser.dataCategory
-    ).map(XKomMainPage.toString+XKomParser.getLinkInText(_))
+    ).map(XKomMainPage.toString + XKomParser.getLinkInText(_))
   }
 
   private def getAllProductsLinks(categoryUrl: String) = {
     def getAllPagesSources(page: Int): List[String] = {
-      val pageSource = HttpClient.downloadPageSource(categoryUrl+"?page="+page+"&per_page=90")
-        pageSource.indexOf("Niestety nie znaleźliśmy tego czego szukasz") match {
-          case -1 => pageSource :: getAllPagesSources(page + 1)
-          case _ => Nil
-        }
+      val pageSource = HttpClient.downloadPageSource(categoryUrl + "?page=" + page + "&per_page=90")
+      pageSource.indexOf("Niestety nie znaleźliśmy tego czego szukasz") match {
+        case -1 => pageSource :: getAllPagesSources(page + 1)
+        case _ => Nil
+      }
     }
 
     categoriesToProductsLinks.get(categoryUrl) match {
       case Some(productLinks) => productLinks
       case None => {
-        val allCategoryProducts = getAllPagesSources(1).flatMap{
-          pageSource => XKomParser.getAllInfoInsideMarkWithText(
-            pageSource,
-            XKomParser.productItemMark,
-            XKomParser.productItem
-          )
-        }.map(XKomMainPage.toString+XKomParser.getLinkInText(_))
+        val allCategoryProducts = getAllPagesSources(1).flatMap {
+          pageSource =>
+            XKomParser.getAllInfoInsideMarkWithText(
+              pageSource,
+              XKomParser.productItemMark,
+              XKomParser.productItem
+            )
+        }.map(XKomMainPage.toString + XKomParser.getLinkInText(_))
         categoriesToProductsLinks += (categoryUrl -> allCategoryProducts)
       }
     }
@@ -62,7 +63,7 @@ class XKomClient {
 
   def downloadRandomProducts(numberOfProducts: Int): List[ProductInfo] = {
     val randomCategories = for {
-      i <- 0 until numberOfProducts
+      _ <- 0 until numberOfProducts
       category = categoriesLinks(r.nextInt(categoriesLinks.length))
     } yield category
 

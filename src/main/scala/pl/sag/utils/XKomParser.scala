@@ -1,5 +1,7 @@
 package pl.sag.utils
 
+import pl.sag.Logger._
+
 object XKomParser {
 
   val productDescriptionStartMark = "Opis produktu"
@@ -30,7 +32,7 @@ object XKomParser {
         descriptionWithRemovedMarks.indexOf(cssFilterMark) match {
           case -1 => Some(descriptionWithRemovedMarks)
           case cssIndex => {
-            println("wrapper section")
+            log("wrapper section", LogLevel.DEBUG)
             Some(descriptionWithRemovedMarks.substring(0, cssIndex))
           }
         }
@@ -47,14 +49,14 @@ object XKomParser {
           pageSource.indexOf(productDetailsEndMark)
         )
         val productDetailIndex = productDetails.indexOf(productName)
-        println("getting title")
+        log("getting title", LogLevel.DEBUG)
         val productTitle = productDetails.substring(
           productDetailIndex,
-          productDetails.substring(productDetailIndex+productName.length).indexOf("\"")+productDetails.indexOf(productName)+productName.length
+          productDetails.substring(productDetailIndex + productName.length).indexOf("\"") + productDetails.indexOf(productName) + productName.length
         ).substring(productName.length)
         Some(productTitle)
       }
-    }g
+    }
   }
 
   def getProductImgUrl(pageSource: String): Option[String] = {
@@ -66,10 +68,10 @@ object XKomParser {
           pageSource.indexOf(productDetailsEndMark)
         )
         val productImgIndex = productDetails.indexOf(productImg)
-        println("getting url")
+        log("getting url", LogLevel.DEBUG)
         val productImgUrl = productDetails.substring(
           productImgIndex,
-          productDetails.substring(productImgIndex+productImg.length).indexOf("\"")+productDetails.indexOf(productImg)+productImg.length
+          productDetails.substring(productImgIndex + productImg.length).indexOf("\"") + productDetails.indexOf(productImg) + productImg.length
         ).substring(productImg.length)
         Some(productImgUrl)
       }
@@ -90,11 +92,11 @@ object XKomParser {
     }
 
     val startIndexes = getAllIndexesWithMark(pageSource, text, 0)
-    val endIndexes = getEndIndexesWithMark(pageSource, "</"+mark+">", startIndexes, startIndexes.head)
+    val endIndexes = getEndIndexesWithMark(pageSource, "</" + mark + ">", startIndexes, startIndexes.head)
 
     startIndexes
       .zip(endIndexes)
-      .map{case (startIndex, endIndex) => pageSource.substring(startIndex, endIndex)}
+      .map { case (startIndex, endIndex) => pageSource.substring(startIndex, endIndex) }
   }
 
   def getTextBetween(source: String, mark1: String, mark2: String) = {
@@ -104,7 +106,7 @@ object XKomParser {
   }
 
   def getLinkInText(source: String) = {
-    getTextBetween(source, "a href=\"", ".html").substring(8)+".html"
+    getTextBetween(source, "a href=\"", ".html").substring(8) + ".html"
   }
 
   private def removedMarks(fullProductDescription: String) = {
@@ -112,20 +114,22 @@ object XKomParser {
     var isAdding = false
     var isOpen = false
     for (i <- fullProductDescription) {
-      if(!isOpen){
-        if(i=='>')
-          isOpen=true
+      if (!isOpen) {
+        if (i == '>')
+          isOpen = true
       }
-      else{
-        if(i.isLetterOrDigit || i=='.' || i==',')
+      else {
+        if (i.isLetterOrDigit || i == '.' || i == ',')
           isAdding = true
-        else if(i=='<') {
-          if(isAdding) {sB.append(". ")}
+        else if (i == '<') {
+          if (isAdding) {
+            sB.append(". ")
+          }
           isAdding = false
           isOpen = false
         }
       }
-      if(isAdding)
+      if (isAdding)
         sB.append(i)
     }
     sB.toString()

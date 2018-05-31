@@ -10,8 +10,8 @@ import scala.collection.mutable
 
 
 class MainActor(
-  val numberOfSubActors: Int
-  )
+                 val numberOfSubActors: Int
+               )
   extends Actor {
 
   private var subActors = mutable.Buffer[ActorRef]()
@@ -27,14 +27,14 @@ class MainActor(
   }
 
   def createSubActor() = {
-    println ("Creating subActor: " + "subActor"+subActors.length)
-    subActors += context.actorOf(Props[SubActor], "subActor"+subActors.length)
+    log("Creating subActor" + "subActor" + subActors.length)
+    subActors += context.actorOf(Props[SubActor], "subActor" + subActors.length)
   }
 
   def startCollectingData() = {
     for (_ <- 0 until numberOfSubActors)
       createSubActor()
-    println("Starting collecting data for " + subActors.length + " subActors.")
+    log("Starting collecting data for " + subActors.length + " subActors.")
     subActors.foreach(_ ! CollectData)
   }
 
@@ -44,9 +44,9 @@ class MainActor(
 
   def isAllDataDownloaded() = {
     if (actorsToProducts.size != subActors.size)
-      println("MainActor is waiting for data")
+      log("MainActor is waiting for data")
     else
-      println("MainActor got all data")
+    log("MainActor got all data")
   }
 
   def showProductsInfo() = {
