@@ -11,4 +11,5 @@ package object sag {
   case object ShowProductsInfo
   case object TerminateChildren
   case object GotAllMessages
+  case object ShowCurrentLinksToProducts
 }

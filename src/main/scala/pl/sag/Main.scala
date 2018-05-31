@@ -14,8 +14,6 @@ object Main extends App {
 
   val mainActor = system.actorOf(Props[MainActor], "MainActor")
 
-  //implicit val timeout = Timeout(20.seconds)
-
   mainActor ! "Elo"
   mainActor ! 22
   mainActor ! CreateSubActor
@@ -23,12 +21,11 @@ object Main extends App {
   mainActor ! CreateSubActor
   mainActor ! StartCollectingData
 
-  //Thread.sleep(60.seconds.toMillis)
-  //println("Time's up")
   var line = ""
   do {
     line = StdIn.readLine()
     mainActor ! GotAllMessages
+    mainActor ! ShowCurrentLinksToProducts
   } while (line != "quit")
 
   mainActor ! ShowProductsInfo

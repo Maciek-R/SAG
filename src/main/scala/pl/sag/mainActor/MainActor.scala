@@ -21,7 +21,11 @@ class MainActor extends Actor {
     case ShowProductsInfo => showProductsInfo()
     case TerminateChildren => subActors.foreach(context.stop(_))
     case GotAllMessages => isAllDataDownloaded()
-    case s: String => println("String: " + s)
+    case ShowCurrentLinksToProducts => showCurrentLinksToProducts()
+    case s: String => {
+      sender ! "echo"
+      println("String: " + s)
+    }
     case n: Int => println("Int: " + n)
   }
 
@@ -53,5 +57,9 @@ class MainActor extends Actor {
     }
 
     log("Sorted Data: ", actorsToProducts.flatMap(_._2).flatMap(_.productsInfo).toList.sortBy(_.linkPage).toString)
+  }
+
+  def showCurrentLinksToProducts() = {
+    actorsToProducts.flatMap(_._2).flatMap(_.productsInfo).map(_.linkPage).foreach(println)
   }
 }
