@@ -2,7 +2,7 @@ package pl.sag.utils
 
 object XKomParser {
 
-  val productDescriptionStartMark = "Opis produktu" //Some products dont have it - filter it
+  val productDescriptionStartMark = "Opis produktu"
   val productDescriptionEndMark = "Specyfikacja"
 
   val dataCategory = "<li data-category-id"
@@ -11,12 +11,59 @@ object XKomParser {
   val productItem = "<div class=\"product-item"
   val productItemMark = "div"
 
-  def getProductInfo(pageSource: String) = {
-    val fullProductDescription = pageSource.substring(
-      pageSource.indexOf(productDescriptionStartMark)+productDescriptionStartMark.length,
-      pageSource.indexOf(productDescriptionEndMark)
-    )
-    removeMarks(fullProductDescription)
+  val productDetails = "<div class=\"col-xs-12 product-detail-impression\""
+  val productDetailsEndMark = "Zdjęcie 1"
+  val productName = "data-product-name=\""
+  val productImg = "<img itemprop=\"image\" src=\""
+
+
+  def getProductDescription(pageSource: String): Option[String] = {
+    pageSource.indexOf(productDescriptionStartMark) match {
+      case -1 => None
+      case index => {
+        val fullProductDescription = pageSource.substring(
+          index + productDescriptionStartMark.length,
+          pageSource.indexOf(productDescriptionEndMark)
+        )
+        Some(removeMarks(fullProductDescription))
+      }
+    }
+  }
+
+  def getProductTitle(pageSource: String): Option[String] = {
+    pageSource.indexOf(productDetails) match {
+      case -1 => None
+      case index => {
+        val productDetails = pageSource.substring(
+          index,
+          pageSource.indexOf(productDetailsEndMark)
+        )
+        val productDetailIndex = productDetails.indexOf(productName)
+        val productTitle = productDetails.substring(
+          productDetailIndex,
+          productDetails.substring(productDetailIndex+productName.length).indexOf("\"")+productDetails.indexOf(productName)+productName.length
+        ).substring(productName.length)
+        Some(productTitle)
+      }
+    }
+  }
+
+  def getProductImgUrl(pageSource: String): Option[String] = {
+    pageSource.indexOf(productDetails) match {
+      case -1 => None
+      case index => {
+        val productDetails = pageSource.substring(
+          index,
+          pageSource.indexOf(productDetailsEndMark)
+        )
+        val productImgIndex = productDetails.indexOf(productImg)
+        val productTitle = productDetails.substring(
+          productImgIndex,
+          productDetails.substring(productImgIndex+productImg.length).indexOf("\"")+productDetails.indexOf(productImg)+productImg.length
+        ).substring(productImg.length)
+        Some(productTitle)
+      }
+    }
   }
 
   def getAllInfoInsideMarkWithText(pageSource: String, mark: String, text: String) = {

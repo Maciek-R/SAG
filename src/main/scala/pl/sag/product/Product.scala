@@ -4,5 +4,7 @@ case class ProductsInfo (productsInfo: List[ProductInfo])
 
 case class ProductInfo(
   linkPage: String,
-  description: Option[String]
+  description: Option[String],
+  title: Option[String],
+  imageUrl: Option[String]
 )

@@ -1,7 +1,6 @@
 package pl.sag.utils
 
 import pl.sag.product.ProductInfo
-import pl.sag.utils.HttpClient._
 
 import scala.util.Random
 
@@ -45,7 +44,10 @@ class XKomClient {
 
   private def getProductInfo(productUrl: String) = {
     val pageSource = HttpClient.downloadPageSource(productUrl)
-    XKomParser.getProductInfo(pageSource)
+    val description = XKomParser.getProductDescription(pageSource)
+    val title = XKomParser.getProductTitle(pageSource)
+    val imgUrl = XKomParser.getProductImgUrl(pageSource)
+    (description, title, imgUrl)
   }
 
   private def getProductLinks(category: String) = {
@@ -71,11 +73,15 @@ class XKomClient {
     } yield randomProductLink
 
     randomProductsLinksFromCategories
-      .map(link =>
+      .map(link => {
+        val (description, title, imgUrl) = getProductInfo(link)
         ProductInfo(
           link,
-          Some(getProductInfo(link))
+          description,
+          title,
+          imgUrl
         )
-      ).toList
+      }
+      ).filter(_.description.isDefined).toList
   }
 }
