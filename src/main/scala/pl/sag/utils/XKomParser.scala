@@ -47,6 +47,7 @@ object XKomParser {
           pageSource.indexOf(productDetailsEndMark)
         )
         val productDetailIndex = productDetails.indexOf(productName)
+        println("getting title")
         val productTitle = productDetails.substring(
           productDetailIndex,
           productDetails.substring(productDetailIndex+productName.length).indexOf("\"")+productDetails.indexOf(productName)+productName.length
@@ -65,11 +66,12 @@ object XKomParser {
           pageSource.indexOf(productDetailsEndMark)
         )
         val productImgIndex = productDetails.indexOf(productImg)
-        val productTitle = productDetails.substring(
+        println("getting url")
+        val productImgUrl = productDetails.substring(
           productImgIndex,
           productDetails.substring(productImgIndex+productImg.length).indexOf("\"")+productDetails.indexOf(productImg)+productImg.length
         ).substring(productImg.length)
-        Some(productTitle)
+        Some(productImgUrl)
       }
     }
   }
