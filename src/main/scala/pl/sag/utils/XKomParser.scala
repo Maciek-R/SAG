@@ -54,7 +54,7 @@ object XKomParser {
         ).substring(productName.length)
         Some(productTitle)
       }
-    }
+    }g
   }
 
   def getProductImgUrl(pageSource: String): Option[String] = {
