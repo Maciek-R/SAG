@@ -9,18 +9,21 @@ import pl.sag.subActor.SubActor
 import scala.collection.mutable
 
 
-class MainActor extends Actor {
+class MainActor(
+  val numberOfSubActors: Int
+  )
+  extends Actor {
+
   private var subActors = mutable.Buffer[ActorRef]()
   private val actorsToProducts = mutable.HashMap[ActorRef, Option[ProductsInfo]]()
 
   override def receive: Receive = {
-    case CreateSubActor => createSubActor()
     case StartCollectingData => startCollectingData()
     case SendCollectedProductsInfoToMainActor(productsInfo) => saveProductsInfo(productsInfo)
     case ShowProductsInfo => showProductsInfo()
     case TerminateChildren => subActors.foreach(context.stop)
     case GotAllMessages => isAllDataDownloaded()
-    case ShowCurrentLinksToProducts => showCurrentLinksToProducts()
+    case ShowCurrentLinksAndImgsOfProducts => showCurrentLinksAndImgsOfProducts()
   }
 
   def createSubActor() = {
@@ -29,6 +32,8 @@ class MainActor extends Actor {
   }
 
   def startCollectingData() = {
+    for (_ <- 0 until numberOfSubActors)
+      createSubActor()
     println("Starting collecting data for " + subActors.length + " subActors.")
     subActors.foreach(_ ! CollectData)
   }
@@ -53,7 +58,7 @@ class MainActor extends Actor {
     log("Sorted Data: ", actorsToProducts.flatMap(_._2).flatMap(_.productsInfo).toList.sortBy(_.linkPage).toString)
   }
 
-  def showCurrentLinksToProducts() = {
-    actorsToProducts.flatMap(_._2).flatMap(_.productsInfo).map(_.linkPage).foreach(println)
+  def showCurrentLinksAndImgsOfProducts() = {
+    actorsToProducts.flatMap(_._2).flatMap(_.productsInfo).map(p => (p.linkPage, p.imageUrl)).foreach(println)
   }
 }

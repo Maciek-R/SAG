@@ -10,18 +10,15 @@ object Main extends App {
 
   val system = ActorSystem("MainSystem")
 
-  val mainActor = system.actorOf(Props[MainActor], "MainActor")
+  val mainActor = system.actorOf(Props(new MainActor(3)), "MainActor")
 
-  mainActor ! CreateSubActor
-  mainActor ! CreateSubActor
-  mainActor ! CreateSubActor
   mainActor ! StartCollectingData
 
   var line = ""
   do {
     line = StdIn.readLine()
     mainActor ! GotAllMessages
-    mainActor ! ShowCurrentLinksToProducts
+    mainActor ! ShowCurrentLinksAndImgsOfProducts
   } while (line != "quit")
 
   mainActor ! ShowProductsInfo

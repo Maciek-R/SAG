@@ -16,6 +16,7 @@ object XKomParser {
   val productName = "data-product-name=\""
   val productImg = "<img itemprop=\"image\" src=\""
 
+  val cssFilterMark = "main-wrapper"
 
   def getProductDescription(pageSource: String): Option[String] = {
     pageSource.indexOf(productDescriptionStartMark) match {
@@ -25,7 +26,14 @@ object XKomParser {
           index + productDescriptionStartMark.length,
           pageSource.indexOf(productDescriptionEndMark)
         )
-        Some(removeMarks(fullProductDescription))
+        val descriptionWithRemovedMarks = removedMarks(fullProductDescription)
+        descriptionWithRemovedMarks.indexOf(cssFilterMark) match {
+          case -1 => Some(descriptionWithRemovedMarks)
+          case cssIndex => {
+            println("wrapper section")
+            Some(descriptionWithRemovedMarks.substring(0, cssIndex))
+          }
+        }
       }
     }
   }
@@ -97,7 +105,7 @@ object XKomParser {
     getTextBetween(source, "a href=\"", ".html").substring(8)+".html"
   }
 
-  private def removeMarks(fullProductDescription: String) = {
+  private def removedMarks(fullProductDescription: String) = {
     val sB = StringBuilder.newBuilder
     var isAdding = false
     var isOpen = false
