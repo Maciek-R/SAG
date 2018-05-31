@@ -14,19 +14,13 @@ class MainActor extends Actor {
   private val actorsToProducts = mutable.HashMap[ActorRef, Option[ProductsInfo]]()
 
   override def receive: Receive = {
-
     case CreateSubActor => createSubActor()
     case StartCollectingData => startCollectingData()
     case SendCollectedProductsInfoToMainActor(productsInfo) => saveProductsInfo(productsInfo)
     case ShowProductsInfo => showProductsInfo()
-    case TerminateChildren => subActors.foreach(context.stop(_))
+    case TerminateChildren => subActors.foreach(context.stop)
     case GotAllMessages => isAllDataDownloaded()
     case ShowCurrentLinksToProducts => showCurrentLinksToProducts()
-    case s: String => {
-      sender ! "echo"
-      println("String: " + s)
-    }
-    case n: Int => println("Int: " + n)
   }
 
   def createSubActor() = {
