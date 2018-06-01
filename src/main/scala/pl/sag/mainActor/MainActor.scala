@@ -9,10 +9,7 @@ import pl.sag.subActor.SubActor
 import scala.collection.mutable
 
 
-class MainActor(
-                 val numberOfSubActors: Int
-               )
-  extends Actor {
+class MainActor(val numberOfSubActors: Int) extends Actor {
 
   private var subActors = mutable.Buffer[ActorRef]()
   private val actorsToProducts = mutable.HashMap[ActorRef, Option[ProductsInfo]]()
