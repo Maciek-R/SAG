@@ -87,12 +87,12 @@ object XKomParser {
       }
     }
 
-    def getEndIndexesWithMark(source: String, mark: String, startIndexes: List[Int], startingIndex: Int) = {
+    def getEndIndexesWithMark(source: String, mark: String, startIndexes: List[Int]) = {
       startIndexes.map(startIndex => source.indexOf(mark, startIndex))
     }
 
     val startIndexes = getAllIndexesWithMark(pageSource, text, 0)
-    val endIndexes = getEndIndexesWithMark(pageSource, "</" + mark + ">", startIndexes, startIndexes.head)
+    val endIndexes = getEndIndexesWithMark(pageSource, "</" + mark + ">", startIndexes)
 
     startIndexes
       .zip(endIndexes)

@@ -1,12 +1,17 @@
 package pl.sag.mainActor
 
+import java.io.{File, PrintWriter}
+import java.nio.file.{Files, Path, Paths}
+
 import akka.actor.{Actor, ActorRef, Props}
 import pl.sag.Logger._
 import pl.sag._
 import pl.sag.product.ProductsInfo
 import pl.sag.subActor.SubActor
+import pl.sag.utils.XKomClient
 
 import scala.collection.mutable
+import scala.io.Source
 
 
 class MainActor(val numberOfSubActors: Int) extends Actor {
@@ -21,6 +26,7 @@ class MainActor(val numberOfSubActors: Int) extends Actor {
     case TerminateChildren => subActors.foreach(context.stop)
     case GotAllMessages => isAllDataDownloaded()
     case ShowCurrentLinksAndImgsOfProducts => showCurrentLinksAndImgsOfProducts()
+    case UpdateLocalBaseCategoriesAndProductsLinks => updateLocalBase()
   }
 
   def createSubActor() = {
@@ -58,4 +64,29 @@ class MainActor(val numberOfSubActors: Int) extends Actor {
   def showCurrentLinksAndImgsOfProducts() = {
     actorsToProducts.flatMap(_._2).flatMap(_.productsInfo).map(p => (p.linkPage, p.imageUrl)).foreach(println)
   }
+
+  def updateLocalBase() = {
+    createDirectories()
+
+    val writer = new PrintWriter(linksFile)
+    val xKomClient = new XKomClient(false)
+    val categoryToProducts = xKomClient.categoriesLinks.map(cat => cat -> xKomClient.getProductLinks(cat)).toMap
+    categoryToProducts.foreach {case(category, products) => {
+        writer.write(category)
+        products.foreach(p => writer.write(" " + p))
+        writer.println()
+      }
+    }
+    writer.close()
+    println(s"Saved ${categoryToProducts.size} links to categories and ${categoryToProducts.values.flatten.size} links to products")
+  }
+
+  private def createDirectories() = {
+    new File(mainFolder).mkdir()
+    new File(productsFolder).mkdir()
+  }
+
+  val mainFolder = "XKom/"
+  val linksFile = "XKom/Links.txt"
+  val productsFolder = "XKom/Products/"
 }

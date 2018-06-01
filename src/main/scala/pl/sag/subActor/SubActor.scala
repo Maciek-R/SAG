@@ -9,7 +9,7 @@ import scala.util.Random
 
 class SubActor extends Actor {
   private val random = new Random
-  val xKomClient = new XKomClient
+  val xKomClient = new XKomClient(true)
 
   override def receive: Receive = {
     case CollectData => collectData()

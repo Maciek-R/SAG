@@ -1,15 +1,34 @@
 package pl.sag.utils
 
+import java.io.{File, PrintWriter}
+
 import pl.sag.product.ProductInfo
 
+import scala.io.Source
 import scala.util.Random
 
-class XKomClient {
+class XKomClient(val workLocally: Boolean) {
+
   val categoriesLinks = getAllCategoriesLinks(XKomMainPage.toString)
   var categoriesToProductsLinks = scala.collection.mutable.HashMap[String, List[String]]()
   val r = new Random
 
   private def getAllCategoriesLinks(pageUrl: String) = {
+    if (workLocally)
+      getAllCategoriesLinksLocally(pageUrl)
+    else
+      getAllCategoriesLinksRemotely(pageUrl)
+  }
+
+  private def getAllCategoriesLinksLocally(pageUrl: String) = {
+    Source.fromFile("XKom/Links.txt")
+      .getLines()
+      .map(_.split(" "))
+      .map(_.head)
+      .toList
+  }
+
+  private def getAllCategoriesLinksRemotely(pageUrl: String) = {
     XKomParser.getAllInfoInsideMarkWithText(
       HttpClient.downloadPageSource(pageUrl),
       XKomParser.dataCategoryMark,
@@ -18,40 +37,78 @@ class XKomClient {
   }
 
   private def getAllProductsLinks(categoryUrl: String) = {
-    def getAllPagesSources(page: Int): List[String] = {
-      val pageSource = HttpClient.downloadPageSource(categoryUrl + "?page=" + page + "&per_page=90")
-      pageSource.indexOf("Niestety nie znaleźliśmy tego czego szukasz") match {
-        case -1 => pageSource :: getAllPagesSources(page + 1)
-        case _ => Nil
+
+    def getAllPagesSourcesRemotely(): List[String] = {
+      def getAllPagesSourcesRemotelyIter(page: Int): List[String] = {
+        val pageSource = HttpClient.downloadPageSource(categoryUrl + "?page=" + page + "&per_page=90")
+        pageSource.indexOf("Niestety nie znaleźliśmy tego czego szukasz") match {
+          case -1 => pageSource :: getAllPagesSourcesRemotelyIter(page + 1)
+          case _ => Nil
+        }
+      }
+      getAllPagesSourcesRemotelyIter(1)
+    }
+
+    def getAllPagesSourcesLocally(): List[String] = {
+      val productLinks = Source.fromFile("XKom/Links.txt")
+        .getLines()
+        .map(_.split(" "))
+        .find(_.head == categoryUrl)
+        .map(_.drop(1))
+
+      productLinks match {
+        case Some(links) => links.toList
+        case None => List()
       }
     }
 
-    categoriesToProductsLinks.get(categoryUrl) match {
-      case Some(productLinks) => productLinks
-      case None => {
-        val allCategoryProducts = getAllPagesSources(1).flatMap {
-          pageSource =>
-            XKomParser.getAllInfoInsideMarkWithText(
-              pageSource,
-              XKomParser.productItemMark,
-              XKomParser.productItem
-            )
-        }.map(XKomMainPage.toString + XKomParser.getLinkInText(_))
-        categoriesToProductsLinks += (categoryUrl -> allCategoryProducts)
+    if(workLocally) {
+      val allCategoryProducts = getAllPagesSourcesLocally()
+      categoriesToProductsLinks += (categoryUrl -> allCategoryProducts)
+    }
+    else {
+      categoriesToProductsLinks.get(categoryUrl) match {
+        case Some(productLinks) => productLinks
+        case None => {
+          val allCategoryProducts = getAllPagesSourcesRemotely().flatMap {
+            pageSource =>
+              XKomParser.getAllInfoInsideMarkWithText(
+                pageSource,
+                XKomParser.productItemMark,
+                XKomParser.productItem
+              )
+          }.map(XKomMainPage.toString + XKomParser.getLinkInText(_))
+          categoriesToProductsLinks += (categoryUrl -> allCategoryProducts)
+        }
       }
     }
+    val x = categoriesToProductsLinks(categoryUrl)
     categoriesToProductsLinks(categoryUrl)
   }
 
   private def getProductInfo(productUrl: String) = {
-    val pageSource = HttpClient.downloadPageSource(productUrl)
+    var pageSource = ""
+    val fileName = "XKom/Products/" + productUrl.replaceAll("/", "^*^") + ".txt"
+    try {
+      val productFile = Source.fromFile(fileName)
+      pageSource = productFile.mkString
+    }
+    catch {
+      case e:Exception => {
+        pageSource = HttpClient.downloadPageSource(productUrl)
+        new File(fileName).createNewFile()
+        val writer = new PrintWriter(fileName)
+        writer.write(pageSource)
+        writer.close()
+      }
+    }
     val description = XKomParser.getProductDescription(pageSource)
     val title = XKomParser.getProductTitle(pageSource)
     val imgUrl = XKomParser.getProductImgUrl(pageSource)
     (description, title, imgUrl)
   }
 
-  private def getProductLinks(category: String) = {
+  def getProductLinks(category: String) = {
     categoriesToProductsLinks.get(category) match {
       case Some(productLinks) => productLinks
       case None => {

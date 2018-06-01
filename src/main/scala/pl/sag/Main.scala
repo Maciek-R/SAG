@@ -12,17 +12,18 @@ object Main extends App {
 
   val mainActor = system.actorOf(Props(new MainActor(3)), "MainActor")
 
-  mainActor ! StartCollectingData
+ // mainActor ! StartCollectingData
+  mainActor ! UpdateLocalBaseCategoriesAndProductsLinks
 
   var line = ""
   do {
     line = StdIn.readLine()
-    mainActor ! GotAllMessages
-    mainActor ! ShowCurrentLinksAndImgsOfProducts
+   // mainActor ! GotAllMessages
+   // mainActor ! ShowCurrentLinksAndImgsOfProducts
   } while (line != "quit")
 
-  mainActor ! ShowProductsInfo
-  mainActor ! TerminateChildren
+  //mainActor ! ShowProductsInfo
+  //mainActor ! TerminateChildren
   system.terminate()
   println("System terminated!")
 }
