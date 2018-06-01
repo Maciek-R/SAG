@@ -1,7 +1,6 @@
 package pl.sag.utils
 
-import java.net.URL
-import java.nio.charset.StandardCharsets
+import pl.sag.Logger._
 
 import scala.io.Source
 
@@ -11,15 +10,18 @@ object HttpClient {
     def retryDownloadPageSource(pageUrl: String, numTriesLeft: Int): String = {
       try {
         val html = Source.fromURL(pageUrl)
+        log(s"Successfully downloaded page $pageUrl", LogLevel.INFO)
+
         html.mkString
       }
       catch {
-        case e: Exception => {
-          println(s"Retrying download: $pageUrl .Tries left: $numTriesLeft")
+        case _: Exception => {
+          log(s"Retrying download: $pageUrl .Tries left: $numTriesLeft", LogLevel.WARNING)
           if (numTriesLeft > 0)
             retryDownloadPageSource(pageUrl, numTriesLeft - 1)
           else
-            sys.error("Error during downloading page source")
+            log("Error during downloading page source", LogLevel.ERROR)
+            ""
         }
       }
     }
