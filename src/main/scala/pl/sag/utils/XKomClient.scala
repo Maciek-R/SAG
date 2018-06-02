@@ -2,12 +2,13 @@ package pl.sag.utils
 
 import java.io.{File, PrintWriter}
 
+import pl.sag.Logger.{LogLevel, log}
 import pl.sag.product.ProductInfo
 
 import scala.io.Source
 import scala.util.Random
 
-class XKomClient(val workLocally: Boolean) {
+class XKomClient(var workLocally: Boolean) {
 
   val categoriesLinks = getAllCategoriesLinks(XKomMainPage.toString)
   var categoriesToProductsLinks = scala.collection.mutable.HashMap[String, List[String]]()
@@ -21,11 +22,20 @@ class XKomClient(val workLocally: Boolean) {
   }
 
   private def getAllCategoriesLinksLocally(pageUrl: String) = {
-    Source.fromFile("XKom/Links.txt")
-      .getLines()
-      .map(_.split(" "))
-      .map(_.head)
-      .toList
+    try {
+      Source.fromFile(FileManager.linksFile)
+        .getLines()
+        .map(_.split(" "))
+        .map(_.head)
+        .toList
+    }
+    catch {
+      case e: Exception => {
+        log("Can't get categories locally. Switching to remote mode.", LogLevel.WARNING)
+        workLocally = false
+        getAllCategoriesLinksRemotely(pageUrl)
+      }
+    }
   }
 
   private def getAllCategoriesLinksRemotely(pageUrl: String) = {
@@ -50,7 +60,7 @@ class XKomClient(val workLocally: Boolean) {
     }
 
     def getAllPagesSourcesLocally(): List[String] = {
-      val productLinks = Source.fromFile("XKom/Links.txt")
+      val productLinks = Source.fromFile(FileManager.linksFile)
         .getLines()
         .map(_.split(" "))
         .find(_.head == categoryUrl)
@@ -88,7 +98,7 @@ class XKomClient(val workLocally: Boolean) {
 
   private def getProductInfo(productUrl: String) = {
     var pageSource = ""
-    val fileName = "XKom/Products/" + productUrl.replaceAll("/", "^*^") + ".txt"
+    val fileName = FileManager.productsFolder + productUrl.replaceAll("/", "^*^") + ".txt"
     try {
       val productFile = Source.fromFile(fileName)
       pageSource = productFile.mkString

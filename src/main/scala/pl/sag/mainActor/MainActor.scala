@@ -1,17 +1,15 @@
 package pl.sag.mainActor
 
 import java.io.{File, PrintWriter}
-import java.nio.file.{Files, Path, Paths}
 
 import akka.actor.{Actor, ActorRef, Props}
 import pl.sag.Logger._
 import pl.sag._
 import pl.sag.product.ProductsInfo
 import pl.sag.subActor.SubActor
-import pl.sag.utils.XKomClient
+import pl.sag.utils.{FileManager, XKomClient}
 
 import scala.collection.mutable
-import scala.io.Source
 
 
 class MainActor(val numberOfSubActors: Int) extends Actor {
@@ -68,7 +66,7 @@ class MainActor(val numberOfSubActors: Int) extends Actor {
   def updateLocalBase() = {
     createDirectories()
 
-    val writer = new PrintWriter(linksFile)
+    val writer = new PrintWriter(FileManager.linksFile)
     val xKomClient = new XKomClient(false)
     val categoryToProducts = xKomClient.categoriesLinks.map(cat => cat -> xKomClient.getProductLinks(cat)).toMap
     categoryToProducts.foreach {case(category, products) => {
@@ -82,11 +80,8 @@ class MainActor(val numberOfSubActors: Int) extends Actor {
   }
 
   private def createDirectories() = {
-    new File(mainFolder).mkdir()
-    new File(productsFolder).mkdir()
+    new File(FileManager.linksFile).createNewFile()
+    new File(FileManager.mainFolder).mkdir()
+    new File(FileManager.productsFolder).mkdir()
   }
-
-  val mainFolder = "XKom/"
-  val linksFile = "XKom/Links.txt"
-  val productsFolder = "XKom/Products/"
 }
