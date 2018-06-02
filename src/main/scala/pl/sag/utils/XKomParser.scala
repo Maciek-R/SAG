@@ -14,8 +14,10 @@ object XKomParser {
   val productItem = "<div class=\"product-item"
   val productItemMark = "div"
 
-  val productDetails = "<div class=\"col-xs-12 product-detail-impression\""
-  val productDetailsEndMark = "Zdjęcie 1"
+  val productDetailsTitle = "<div class=\"col-xs-12 product-detail-impression\""
+  val productDetailsTitleEndMark = "product-title"
+  val productDetailsImg = "<a class=\"prettyphoto-fullscreen-item\""
+  val productDetailsImgEndMark = "Zdjęcie 1"
   val productName = "data-product-name=\""
   val productImg = "<img itemprop=\"image\" src=\""
 
@@ -23,7 +25,10 @@ object XKomParser {
 
   def getProductDescription(pageSource: String): Option[String] = {
     pageSource.indexOf(productDescriptionStartMark) match {
-      case -1 => None
+      case -1 => {
+        log("no product description filter", LogLevel.DEBUG)
+        None
+      }
       case index => {
         val fullProductDescription = pageSource.substring(
           index + productDescriptionStartMark.length,
@@ -36,7 +41,7 @@ object XKomParser {
         descriptionWithRemovedMarks.indexOf(cssFilterMark) match {
           case -1 => Some(descriptionWithRemovedMarks)
           case cssIndex => {
-            log("wrapper section", LogLevel.DEBUG)
+            log("wrapper section filter", LogLevel.DEBUG)
             Some(descriptionWithRemovedMarks.substring(0, cssIndex))
           }
         }
@@ -45,12 +50,12 @@ object XKomParser {
   }
 
   def getProductTitle(pageSource: String): Option[String] = {
-    pageSource.indexOf(productDetails) match {
+    pageSource.indexOf(productDetailsTitle) match {
       case -1 => None
       case index => {
         val productDetails = pageSource.substring(
           index,
-          pageSource.indexOf(productDetailsEndMark)
+          pageSource.indexOf(productDetailsTitleEndMark)
         )
         val productDetailIndex = productDetails.indexOf(productName)
         log("getting title", LogLevel.DEBUG)
@@ -64,15 +69,15 @@ object XKomParser {
   }
 
   def getProductImgUrl(pageSource: String): Option[String] = {
-    pageSource.indexOf(productDetails) match {
+    pageSource.indexOf(productDetailsImg) match {
       case -1 => None
       case index => {
         val productDetails = pageSource.substring(
           index,
-          pageSource.indexOf(productDetailsEndMark)
+          pageSource.indexOf(productDetailsImgEndMark)
         )
         val productImgIndex = productDetails.indexOf(productImg)
-        log("getting url", LogLevel.DEBUG)
+        log("getting imgUrl", LogLevel.DEBUG)
         val productImgUrl = productDetails.substring(
           productImgIndex,
           productDetails.substring(productImgIndex + productImg.length).indexOf("\"") + productDetails.indexOf(productImg) + productImg.length

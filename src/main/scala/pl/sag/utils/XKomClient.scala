@@ -101,6 +101,7 @@ class XKomClient(var workLocally: Boolean) {
     val fileName = FileManager.productsFolder + productUrl.replaceAll("/", "^*^") + ".txt"
     try {
       val productFile = Source.fromFile(fileName)
+      log(s"Loaded file from disc $productUrl", LogLevel.INFO)
       pageSource = productFile.mkString
     }
     catch {
