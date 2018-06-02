@@ -97,26 +97,36 @@ class XKomClient(var workLocally: Boolean) {
   }
 
   private def getProductInfo(productUrl: String) = {
-    var pageSource = ""
+    var pageSource: Option[String] = None
     val fileName = FileManager.productsFolder + productUrl.replaceAll("/", "^*^") + ".txt"
     try {
       val productFile = Source.fromFile(fileName)
       log(s"Loaded file from disc $productUrl", LogLevel.INFO)
-      pageSource = productFile.mkString
+      pageSource = Some(productFile.mkString)
     }
     catch {
       case e:Exception => {
-        pageSource = HttpClient.downloadPageSource(productUrl)
-        new File(fileName).createNewFile()
-        val writer = new PrintWriter(fileName)
-        writer.write(pageSource)
-        writer.close()
+        pageSource = XKomParser.cutPageSource(HttpClient.downloadPageSource(productUrl))
+        pageSource match {
+          case None =>
+          case Some(source) => {
+            new File(fileName).createNewFile()
+            val writer = new PrintWriter(fileName)
+            writer.write(source)
+            writer.close()
+          }
+        }
       }
     }
-    val description = XKomParser.getProductDescription(pageSource)
-    val title = XKomParser.getProductTitle(pageSource)
-    val imgUrl = XKomParser.getProductImgUrl(pageSource)
-    (description, title, imgUrl)
+    pageSource match {
+      case None => (None, None, None)
+      case Some(source) => {
+        val description = XKomParser.getProductDescription(source)
+        val title = XKomParser.getProductTitle(source)
+        val imgUrl = XKomParser.getProductImgUrl(source)
+        (description, title, imgUrl)
+      }
+    }
   }
 
   def getProductLinks(category: String) = {

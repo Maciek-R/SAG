@@ -99,6 +99,23 @@ object XKomParser {
       .map { case (startIndex, endIndex) => pageSource.substring(startIndex, endIndex) }
   }
 
+  def cutPageSource(pageSource: String): Option[String] = {
+    pageSource.indexOf(productDetailsTitle) match {
+      case -1 => None
+      case index => {
+        Some(
+          pageSource.substring(
+            index,
+            pageSource.indexOf(productDescriptionEndMark) match {
+              case -1 => pageSource.indexOf(productDescriptionEndMark2) + productDescriptionEndMark2.length
+              case index => index + productDescriptionEndMark.length
+            }
+          )
+        )
+      }
+    }
+  }
+
   def getTextBetween(source: String, mark1: String, mark2: String) = {
     source.substring(
       source.indexOf(mark1),
