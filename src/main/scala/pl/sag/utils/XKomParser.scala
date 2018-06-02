@@ -22,6 +22,8 @@ object XKomParser {
   val productImg = "<img itemprop=\"image\" src=\""
 
   val cssFilterMark = "main-wrapper"
+  val cssFilterMark2 = "<style type=\"text/css\""
+  val cssFilterEndMark2 = "</style>"
 
   def getProductDescription(pageSource: String): Option[String] = {
     pageSource.indexOf(productDescriptionStartMark) match {
@@ -108,10 +110,18 @@ object XKomParser {
   }
 
   private def removedMarks(fullProductDescription: String) = {
+    val removedCssProductDescription = fullProductDescription.indexOf(cssFilterMark2) match {
+      case -1 => fullProductDescription
+      case startIndex => fullProductDescription.substring(
+        startIndex,
+        fullProductDescription.indexOf(cssFilterEndMark2)+cssFilterMark2.length
+      )
+    }
+
     val sB = StringBuilder.newBuilder
     var isAdding = false
     var isOpen = false
-    for (i <- fullProductDescription) {
+    for (i <- removedCssProductDescription) {
       if (!isOpen) {
         if (i == '>')
           isOpen = true
