@@ -17,7 +17,7 @@ class SubActor extends Actor {
 
   def collectData() = {
     log(s"SubActor ${self.path.name} started downloading products.")
-    val products = xKomClient.downloadRandomProducts(2)
+    val products = xKomClient.downloadRandomProducts(10)
 
     log(s"SubActor ${self.path.name} downloaded products.")
     sender ! SendCollectedProductsInfoToMainActor(ProductsInfo(products))

@@ -6,6 +6,7 @@ object XKomParser {
 
   val productDescriptionStartMark = "Opis produktu"
   val productDescriptionEndMark = "Specyfikacja"
+  val productDescriptionEndMark2 = "Opinie"
 
   val dataCategory = "<li data-category-id"
   val dataCategoryMark = "li"
@@ -26,7 +27,10 @@ object XKomParser {
       case index => {
         val fullProductDescription = pageSource.substring(
           index + productDescriptionStartMark.length,
-          pageSource.indexOf(productDescriptionEndMark)
+          pageSource.indexOf(productDescriptionEndMark) match {
+            case -1 => pageSource.indexOf(productDescriptionEndMark2)
+            case index => index
+          }
         )
         val descriptionWithRemovedMarks = removedMarks(fullProductDescription)
         descriptionWithRemovedMarks.indexOf(cssFilterMark) match {
