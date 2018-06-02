@@ -107,6 +107,7 @@ class XKomClient(var workLocally: Boolean) {
     catch {
       case e:Exception => {
         pageSource = XKomParser.cutPageSource(HttpClient.downloadPageSource(productUrl))
+        pageSource = XKomParser.mapToPolishCharacters(pageSource)
         pageSource match {
           case None =>
           case Some(source) => {

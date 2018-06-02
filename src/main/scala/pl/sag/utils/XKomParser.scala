@@ -2,6 +2,8 @@ package pl.sag.utils
 
 import pl.sag.Logger._
 
+import scala.annotation.tailrec
+
 object XKomParser {
 
   val productDescriptionStartMark = "Opis produktu"
@@ -24,6 +26,12 @@ object XKomParser {
   val cssFilterMark = "main-wrapper"
   val cssFilterMark2 = "<style type=\"text/css\""
   val cssFilterEndMark2 = "</style>"
+
+  val characterMapper = Map(
+    "&oacute;"->"ó", "&ndash;" -> "-", "&bdquo;"-> "",
+    "&rdquo;" -> "", "&reg;" -> "", "&nbsp;" -> "", "&quot;" -> "\"",
+    "&mdash;" -> "-", "&#39;" -> "", "&trade;" -> "", "&rsquo;" -> "'",
+    "&#039;" -> "'", "&amp;" -> "&", "&gt;" -> ">")
 
   def getProductDescription(pageSource: String): Option[String] = {
     pageSource.indexOf(productDescriptionStartMark) match {
@@ -113,6 +121,20 @@ object XKomParser {
           )
         )
       }
+    }
+  }
+
+  def mapToPolishCharacters(source: Option[String]) = {
+    @tailrec
+    def map(text: String, mapper: List[(String, String)]): String = {
+      mapper match {
+        case (from, to) :: rest => map(text.replaceAll(from, to), rest)
+        case Nil => text
+      }
+    }
+    source match {
+      case None => None
+      case Some(text) => Some(map(text, characterMapper.toList))
     }
   }
 
