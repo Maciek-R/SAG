@@ -9,7 +9,7 @@ package object sag {
   case class SendCollectedProductsInfoToMainActor(productsInfo: ProductsInfo)
   case object ShowProductsInfo
   case object TerminateChildren
-  case object GotAllMessages
+  case object CheckIfGotAllMessages
   case object ShowCurrentLinksAndImgsOfProducts
   case object UpdateLocalBaseCategoriesAndProductsLinks
 }

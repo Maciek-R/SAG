@@ -24,7 +24,7 @@ class MainActor(val numberOfSubActors: Int) extends Actor {
     case SendCollectedProductsInfoToMainActor(productsInfo) => saveProductsInfo(productsInfo)
     case ShowProductsInfo => showProductsInfo()
     case TerminateChildren => subActors.foreach(context.stop)
-    case GotAllMessages => isAllDataDownloaded()
+    case CheckIfGotAllMessages => isAllDataDownloaded()
     case ShowCurrentLinksAndImgsOfProducts => showCurrentLinksAndImgsOfProducts()
     case UpdateLocalBaseCategoriesAndProductsLinks => updateLocalBase()
   }

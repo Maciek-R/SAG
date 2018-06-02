@@ -12,18 +12,25 @@ object Main extends App {
 
   val mainActor = system.actorOf(Props(new MainActor(3)), "MainActor")
 
- // mainActor ! StartCollectingData
-  mainActor ! UpdateLocalBaseCategoriesAndProductsLinks
-
   var line = ""
   do {
+    println("1. Rozpocznij zbieranie danych")
+    println("2. Sprawdz czy odebrano wszystkie dane od podaktorów")
+    println("3. Pokaż aktualnie otrzymane dane o produktach")
+    println("5. Zaktualizuj lokalną bazę linków")
+    println("0. Wyjscie")
+    print(">>")
     line = StdIn.readLine()
-   // mainActor ! GotAllMessages
-   // mainActor ! ShowCurrentLinksAndImgsOfProducts
-  } while (line != "quit")
+    line match {
+      case "1" => mainActor ! StartCollectingData
+      case "2" => mainActor ! CheckIfGotAllMessages
+      case "3" => mainActor ! ShowCurrentLinksAndImgsOfProducts
+      case "5" => mainActor ! UpdateLocalBaseCategoriesAndProductsLinks
+      case _ =>
+    }
+  } while (line != "quit" && line != "0")
 
-  //mainActor ! ShowProductsInfo
-  //mainActor ! TerminateChildren
+  mainActor ! TerminateChildren
   system.terminate()
   println("System terminated!")
 }
