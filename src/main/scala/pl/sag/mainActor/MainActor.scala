@@ -64,11 +64,10 @@ class MainActor(val numberOfSubActors: Int) extends Actor {
   }
 
   def updateLocalBase() = {
-    createDirectories()
-
-    val writer = new PrintWriter(FileManager.linksFile)
     val xKomClient = new XKomClient(false)
     val categoryToProducts = xKomClient.categoriesLinks.map(cat => cat -> xKomClient.getProductLinks(cat)).toMap
+    createDirectories()
+    val writer = new PrintWriter(FileManager.linksFile)
     categoryToProducts.foreach {case(category, products) => {
         writer.write(category)
         products.foreach(p => writer.write(" " + p))

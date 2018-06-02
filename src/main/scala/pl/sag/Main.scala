@@ -10,7 +10,7 @@ object Main extends App {
 
   val system = ActorSystem("MainSystem")
 
-  val mainActor = system.actorOf(Props(new MainActor(3)), "MainActor")
+  val mainActor = system.actorOf(Props(new MainActor(10)), "MainActor")
 
   var line = ""
   do {
