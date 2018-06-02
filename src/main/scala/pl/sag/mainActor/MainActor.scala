@@ -65,15 +65,17 @@ class MainActor(val numberOfSubActors: Int) extends Actor {
 
   def updateLocalBase() = {
     val xKomClient = new XKomClient(false)
-    val categoryToProducts = xKomClient.categoriesLinks.map(cat => cat -> xKomClient.getProductLinks(cat)).toMap
     createDirectories()
     val writer = new PrintWriter(FileManager.linksFile)
-    categoryToProducts.foreach {case(category, products) => {
-        writer.write(category)
+    val categoryToProducts = xKomClient.categoriesLinks.par
+      .map(cat => {
+        val products = xKomClient.getProductLinks(cat)
+        writer.write(cat)
         products.foreach(p => writer.write(" " + p))
         writer.println()
-      }
-    }
+        cat -> products
+      })
+      .toList.toMap
     writer.close()
     println(s"Saved ${categoryToProducts.size} links to categories and ${categoryToProducts.values.flatten.size} links to products")
   }
