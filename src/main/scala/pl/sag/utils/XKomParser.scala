@@ -110,13 +110,15 @@ object XKomParser {
   }
 
   private def removedMarks(fullProductDescription: String) = {
-    val removedCssProductDescription = fullProductDescription.indexOf(cssFilterMark2) match {
-      case -1 => fullProductDescription
-      case startIndex => fullProductDescription.substring(
-        startIndex,
-        fullProductDescription.indexOf(cssFilterEndMark2)+cssFilterMark2.length
-      )
+    def removeCssSections(str: String): String = {
+      str.indexOf(cssFilterMark2) match {
+        case -1 => str
+        case index => {
+          removeCssSections(str.substring(0, index)+str.substring(str.indexOf(cssFilterEndMark2) + cssFilterEndMark2.length))
+        }
+      }
     }
+    val removedCssProductDescription = removeCssSections(fullProductDescription)
 
     val sB = StringBuilder.newBuilder
     var isAdding = false
