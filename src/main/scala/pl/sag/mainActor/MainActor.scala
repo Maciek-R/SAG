@@ -81,8 +81,8 @@ class MainActor(val numberOfSubActors: Int) extends Actor {
   }
 
   private def createDirectories() = {
-    new File(FileManager.linksFile).createNewFile()
     new File(FileManager.mainFolder).mkdir()
     new File(FileManager.productsFolder).mkdir()
+    new File(FileManager.linksFile).createNewFile()
   }
 }

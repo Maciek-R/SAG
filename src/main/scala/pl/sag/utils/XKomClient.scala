@@ -1,6 +1,7 @@
 package pl.sag.utils
 
 import java.io.{File, PrintWriter}
+import java.util.Base64
 
 import pl.sag.Logger.{LogLevel, log}
 import pl.sag.product.ProductInfo
@@ -98,7 +99,7 @@ class XKomClient(var workLocally: Boolean) {
 
   private def getProductInfo(productUrl: String) = {
     var pageSource: Option[String] = None
-    val fileName = FileManager.productsFolder + productUrl.replaceAll("/", "^*^") + ".txt"
+    val fileName = FileManager.productsFolder + Base64.getEncoder.encodeToString(productUrl.getBytes("UTF-8"))
     try {
       val productFile = Source.fromFile(fileName)
       log(s"Loaded file from disc $productUrl", LogLevel.INFO)
@@ -112,6 +113,7 @@ class XKomClient(var workLocally: Boolean) {
           case None =>
           case Some(source) => {
             new File(fileName).createNewFile()
+            log(s"Saved file $fileName")
             val writer = new PrintWriter(fileName)
             writer.write(source)
             writer.close()
