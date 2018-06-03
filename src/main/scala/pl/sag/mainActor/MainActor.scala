@@ -5,7 +5,7 @@ import java.io.{File, PrintWriter}
 import akka.actor.{Actor, ActorRef, Props}
 import pl.sag.Logger._
 import pl.sag._
-import pl.sag.product.ProductsInfo
+import pl.sag.product.{ProductInfo, ProductsInfo}
 import pl.sag.subActor.SubActor
 import pl.sag.utils.{FileManager, XKomClient}
 
@@ -20,6 +20,8 @@ class MainActor(val numberOfSubActors: Int) extends Actor {
   override def receive: Receive = {
     case StartCollectingData => startCollectingData()
     case SendCollectedProductsInfoToMainActor(productsInfo) => saveProductsInfo(productsInfo)
+    case SendBestMatchesToMainActor(topMatches) => displayBestMatches(topMatches)
+    case GetBestMatches(productUrl) => getBestMatches(productUrl)
     case ShowProductsInfo => showProductsInfo()
     case TerminateChildren => subActors.foreach(context.stop)
     case CheckIfGotAllMessages => isAllDataDownloaded()
@@ -39,8 +41,21 @@ class MainActor(val numberOfSubActors: Int) extends Actor {
     subActors.foreach(_ ! CollectData)
   }
 
+  def getBestMatches(productUrl: String) = {
+    subActors.foreach(_ ! GetBestMatches(productUrl))
+  }
+
   def saveProductsInfo(productsInfo: ProductsInfo) = {
     actorsToProducts += (sender -> Some(productsInfo))
+  }
+
+  def displayBestMatches(topMatches: Seq[(ProductInfo, Double)]) = {
+    if (topMatches.isEmpty)
+      println("Couldn't find any relevant documents")
+    else {
+      println(s"Top results:")
+      topMatches.foreach(println)
+    }
   }
 
   def isAllDataDownloaded() = {

@@ -156,14 +156,18 @@ class XKomClient(var workLocally: Boolean) {
 
     randomProductsLinksFromCategories
       .map(link => {
-        val (description, title, imgUrl) = getProductInfo(link)
-        ProductInfo(
-          link,
-          description,
-          title,
-          imgUrl
-        )
+        downloadProduct(link)
       }
       ).filter(_.description.isDefined).toList
+  }
+
+  def downloadProduct(link: String) = {
+    val (description, title, imgUrl) = getProductInfo(link)
+    ProductInfo(
+      link,
+      description,
+      title,
+      imgUrl
+    )
   }
 }

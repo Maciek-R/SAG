@@ -10,7 +10,7 @@ object Main extends App {
 
   val system = ActorSystem("MainSystem")
 
-  val mainActor = system.actorOf(Props(new MainActor(10)), "MainActor")
+  val mainActor = system.actorOf(Props(new MainActor(5)), "MainActor")
 
   var line = ""
   do {
@@ -18,6 +18,7 @@ object Main extends App {
     println("2. Sprawdz czy odebrano wszystkie dane od podaktorów")
     println("3. Pokaż aktualnie otrzymane dane o produktach")
     println("5. Zaktualizuj lokalną bazę linków")
+    println("6. Pokaż najlepsze dopasowania(podaj link)")
     println("0. Wyjscie")
     print(">>")
     line = StdIn.readLine()
@@ -26,6 +27,7 @@ object Main extends App {
       case "2" => mainActor ! CheckIfGotAllMessages
       case "3" => mainActor ! ShowCurrentLinksAndImgsOfProducts
       case "5" => mainActor ! UpdateLocalBaseCategoriesAndProductsLinks
+      case "6" => mainActor ! GetBestMatches(StdIn.readLine())
       case _ =>
     }
   } while (line != "quit" && line != "0")
