@@ -10,6 +10,6 @@ case class ProductInfo(
 ) {
   override def toString: String = {
     val shortDesc: String = description.get.substring(0, Math.min(description.get.length(), 100))
-    s"# ${title.get} # ($linkPage) - $shortDesc..."
+    s"# ${title.get} # $shortDesc... - url($linkPage), img(${imageUrl.get})"
   }
 }

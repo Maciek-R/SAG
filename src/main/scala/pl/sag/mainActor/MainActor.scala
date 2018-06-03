@@ -23,7 +23,7 @@ class MainActor(val numberOfSubActors: Int) extends Actor {
     case ShowProductsInfo => showProductsInfo()
     case TerminateChildren => subActors.foreach(context.stop)
     case CheckIfGotAllMessages => isAllDataDownloaded()
-    case ShowCurrentLinksAndImgsOfProducts => showCurrentLinksAndImgsOfProducts()
+    case ShowCurrentLinksAndImgsOfProducts => showCurrentProducts()
     case UpdateLocalBaseCategoriesAndProductsLinks => updateLocalBase()
   }
 
@@ -59,8 +59,8 @@ class MainActor(val numberOfSubActors: Int) extends Actor {
     log("Sorted Data: ", actorsToProducts.flatMap(_._2).flatMap(_.productsInfo).toList.sortBy(_.linkPage).toString)
   }
 
-  def showCurrentLinksAndImgsOfProducts() = {
-    actorsToProducts.flatMap(_._2).flatMap(_.productsInfo).map(p => (p.linkPage, p.imageUrl)).foreach(println)
+  def showCurrentProducts() = {
+    actorsToProducts.flatMap(_._2).flatMap(_.productsInfo).foreach(println)
   }
 
   def updateLocalBase() = {
