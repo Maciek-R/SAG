@@ -1,11 +1,11 @@
 package pl.sag.subActor
 
-import pl.sag.Logger._
 import akka.actor.Actor
-import pl.sag.product.ProductsInfo
+import pl.sag.Logger._
+import pl.sag._
+import pl.sag.product.ProductInfo
 import pl.sag.text.{IndexedDocuments, Indexer, TextPreprocessor}
 import pl.sag.utils.XKomClient
-import pl.sag._
 
 import scala.util.Random
 
@@ -13,44 +13,43 @@ class SubActor extends Actor {
   private val random = new Random
   val xKomClient = new XKomClient(true)
 
+  val numberOfProducts = 100
+  val numberOfBestMatches = 5
+
   var model: IndexedDocuments = _
+  var isReady: Boolean = false
 
   override def receive: Receive = {
-    case CollectData => collectData()
-    case CollectDataBl => collectDataBl()
-    case GetBestMatches(productUrl: String) => getBestMatches(productUrl)
+    case BuildModel => buildModel()
+
+    case SearchByProductInfo(product: ProductInfo) => searchByProductInfo(product)
+    case SearchByStringQuery(text: String) => searchByStringQuery(text)
   }
 
-  def collectData() = {
+  def buildModel(): Unit = {
     log(s"SubActor ${self.path.name} started downloading products.")
-    val products = xKomClient.downloadRandomProducts(5)
+    val products = xKomClient.downloadRandomProducts(numberOfProducts)
 
     log(s"SubActor ${self.path.name} downloaded products.")
 
     model = Indexer.indexDocuments(products.map(p => (p, TextPreprocessor.preprocess(p.description.get))).toIterator)
     log(s"SubActor ${self.path.name} indexed products.")
 
-    sender ! SendCollectedProductsInfoToMainActor(ProductsInfo(products))
+    isReady = true
+
+    sender ! SubActorIsReady
   }
 
-  def collectDataBl() = {
-    log(s"SubActor ${self.path.name} started downloading products.")
-    val products = xKomClient.downloadRandomProducts(15)
-
-    log(s"SubActor ${self.path.name} downloaded products.")
-
-    model = Indexer.indexDocuments(products.map(p => (p, TextPreprocessor.preprocess(p.description.get))).toIterator)
-    log(s"SubActor ${self.path.name} indexed products.")
-
-    sender ! ProductsInfo(products)
+  private def searchBestMatches(words: List[String]): Unit = {
+    if (isReady)
+      sender ! CollectBestMatches(model.search(words, numberOfBestMatches))
   }
 
-  def getBestMatches(productUrl: String) = {
-    if (model != null) {
-      val product = xKomClient.downloadProduct(productUrl)
-      val words = TextPreprocessor.preprocess(product.description.get)
-      val topMatches = model.search(words, 50)
-      sender ! SendBestMatchesToMainActor(topMatches)
-    }
+  def searchByStringQuery(text: String): Unit = {
+    searchBestMatches(TextPreprocessor.preprocess(text))
+  }
+
+  def searchByProductInfo(product: ProductInfo): Unit = {
+    searchBestMatches(TextPreprocessor.preprocess(product.description.get))
   }
 }

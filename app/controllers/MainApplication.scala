@@ -23,11 +23,31 @@ import scala.language.postfixOps
 class MainApplication @Inject()(cc: ControllerComponents, actorSystem: ActorSystem)(implicit exec: ExecutionContext)
   extends AbstractController(cc) {
 
-  val mainActor = actorSystem.actorOf(Props(new MainActor(4)), "MainActor")
+  val mainActor = actorSystem.actorOf(Props(new MainActor()), "MainActor")
 
   def hello = Action {Ok("hello")}
 
-  def start = Action {
+  def createSubActor = Action {
+    mainActor ! CreateSubActor
+    Ok("Ok")
+  }
+
+  def getSubActors = Action {
+    implicit val timeout = Timeout(10 seconds)
+    val futureSubActors: Future[List[String]] = ask(mainActor, GetSubActors).mapTo[List[String]]
+    val subActors = Await.result(futureSubActors, timeout.duration)
+    Ok(subActors.toString)
+  }
+
+  def getBestMatches = Action {
+    implicit val timeout = Timeout(30 seconds)
+    val url = ""//TODO
+    val futureSubActors: Future[List[String]] = ask(mainActor, SearchByStringQueryBlock(url)).mapTo[List[String]]
+    val subActors = Await.result(futureSubActors, timeout.duration)
+    Ok("")
+  }
+
+  /*def start = Action {
     implicit val timeout = Timeout(50 seconds)
     val futureProductsInfos: Future[List[ProductsInfo]] = ask(mainActor, StartCollectingDataBlock).mapTo[List[ProductsInfo]]
     val productsInfos = Await.result(futureProductsInfos, timeout.duration)
@@ -57,5 +77,5 @@ class MainApplication @Inject()(cc: ControllerComponents, actorSystem: ActorSyst
     val futureProductsInfos: Future[List[ProductInfo]] = ask(mainActor, GetProductsInfo).mapTo[List[ProductInfo]]
     val productsInfos = Await.result(futureProductsInfos, timeout.duration)
     Ok(productsInfos.map(_.toString+"\n").toString)
-  }
+  }*/
 }

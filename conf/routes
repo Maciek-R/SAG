@@ -13,9 +13,11 @@ GET     /message                    controllers.AsyncController.message
 GET     /assets/*file               controllers.Assets.versioned(file)
 
 GET     /hello                      controllers.MainApplication.hello
-GET     /start                      controllers.MainApplication.start
-GET     /check                      controllers.MainApplication.check
-GET     /update                     controllers.MainApplication.updateLocalBase
-GET     /getProductsInfo            controllers.MainApplication.getProductsInfo
-GET     /getBestMatches            controllers.MainApplication.getBestMatches
+GET     /createSubActor             controllers.MainApplication.createSubActor
+GET     /getSubActors               controllers.MainApplication.getSubActors
+#GET     /start                      controllers.MainApplication.start
+#GET     /check                      controllers.MainApplication.check
+#GET     /update                     controllers.MainApplication.updateLocalBase
+#GET     /getProductsInfo            controllers.MainApplication.getProductsInfo
+#GET     /getBestMatches            controllers.MainApplication.getBestMatches
 

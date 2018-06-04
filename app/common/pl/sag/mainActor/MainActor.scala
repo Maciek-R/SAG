@@ -3,114 +3,136 @@ package pl.sag.mainActor
 import java.io.{File, PrintWriter}
 
 import akka.actor.{Actor, ActorRef, Props}
-import akka.pattern.ask
-import akka.util.Timeout
 import pl.sag.Logger._
 import pl.sag._
-import pl.sag.product.{ProductInfo, ProductsInfo}
+import pl.sag.product.ProductInfo
 import pl.sag.subActor.SubActor
 import pl.sag.utils.{FileManager, XKomClient}
-import scala.concurrent.{Await, ExecutionContext, Future}
+
+import scala.collection.{immutable, mutable}
+import akka.pattern.ask
+import akka.util.Timeout
 import scala.concurrent.duration._
-import scala.collection.mutable
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
-import scala.concurrent._
-import ExecutionContext.Implicits.global
+
+import scala.concurrent.{Await, Future}
 
 
-class MainActor (val numberOfSubActors: Int) extends Actor {
+class MainActor extends Actor {
 
-  implicit val timeout = Timeout(50 seconds)
   private var subActors = mutable.Buffer[ActorRef]()
-  private val actorsToProducts = mutable.HashMap[ActorRef, Option[ProductsInfo]]()
+  private val readySubActors = mutable.HashMap[ActorRef, Boolean]()
+  private var subActorsCount: Int = 0
+
+  private val bestMatchesFromSubActors = mutable.HashMap[ActorRef, Seq[(ProductInfo, Double)]]()
+  implicit val timeout = Timeout(60 seconds)
 
   override def receive: Receive = {
-    case StartCollectingData => startCollectingData()
-    case StartCollectingDataBlock => startCollectingDataBlock()
-    case SendCollectedProductsInfoToMainActor(productsInfo) => saveProductsInfo(productsInfo)
-    case SendBestMatchesToMainActor(topMatches) => displayBestMatches(topMatches)
-    case GetBestMatches(productUrl) => getBestMatches(productUrl)
-    case GetBestMatchesBl(productUrl) => getBestMatchesBl(productUrl)
-    case ShowProductsInfo => showProductsInfo()
-    case GetProductsInfo => getProductsInfo()
+
+    case CreateSubActor => createSubActor()
+    case RemoveSubActor(index) => removeSubActor(index)
+    case CountReadySubActors => countReadyActors()
+    case ListSubActors => listSubActors()
+    case GetSubActors => getSubActors()
+
+    case SubActorIsReady => setSubActorReady()
+
+    case SearchByProductInfo(product: ProductInfo) => searchByProductInfo(product)
+    case SearchByStringQuery(text: String) => searchByStringQuery(text)
+    //case SearchByStringQueryBlock(text: String) => searchByStringQueryBlock(text)
+
+    case CollectBestMatches(bestMatches) => collectBestMatches(bestMatches)
+
     case TerminateChildren => subActors.foreach(context.stop)
-    case CheckIfGotAllMessages => isAllDataDownloaded()
-    case ShowCurrentLinksAndImgsOfProducts => showCurrentProducts()
     case UpdateLocalBaseCategoriesAndProductsLinks => updateLocalBase()
   }
 
-  def createSubActor() = {
-    log("Creating subActor" + "subActor" + subActors.length)
-    subActors += context.actorOf(Props[SubActor], "subActor" + subActors.length)
+  def createSubActor(): Unit = {
+    log(s"Creating subActor$subActorsCount")
+
+    val subActor = context.actorOf(Props[SubActor], "subActor" + subActorsCount)
+    subActorsCount += 1
+
+    subActors += subActor
+    readySubActors.update(subActor, false)
+
+    subActor ! BuildModel
   }
 
-  def startCollectingData() = {
-    for (_ <- 0 until numberOfSubActors)
-      createSubActor()
-    log("Starting collecting data for " + subActors.length + " subActors.")
-    subActors.foreach(_ ! CollectData)
-  }
-
-  def startCollectingDataBlock() = {
-    for (_ <- 0 until numberOfSubActors)
-      createSubActor()
-    log("Starting collecting data for " + subActors.length + " subActors.")
-    val futureProductsInfo = subActors.map(act => ask(act, CollectDataBl).mapTo[ProductsInfo]).toList
-    val productInfos = Future.sequence(futureProductsInfo)
-    val productsInfos = Await.result(productInfos, timeout.duration)
-    sender ! productsInfos
-  }
-
-  def getBestMatches(productUrl: String) = {
-    subActors.foreach(_ ! GetBestMatches(productUrl))
-  }
-
-  def getBestMatchesBl(productUrl: String) = {
-    val listFuturesBestMatches = subActors.map(act => ask(act, GetBestMatches(productUrl)).mapTo[SendBestMatchesToMainActor]).toList
-    val bestMatchesFutureList = Future.sequence(listFuturesBestMatches)
-    val bestMatches = Await.result(bestMatchesFutureList, timeout.duration)
-    sender ! bestMatches
-  }
-
-  def saveProductsInfo(productsInfo: ProductsInfo) = {
-    actorsToProducts += (sender -> Some(productsInfo))
-  }
-
-  def displayBestMatches(topMatches: Seq[(ProductInfo, Double)]) = {
-    if (topMatches.isEmpty)
-      println("Couldn't find any relevant documents")
+  def removeSubActor(index: Int): Unit = {
+    if (index >= subActors.length || index < 0)
+      log(s"Wrong index $index")
     else {
-      println(s"Top results:")
-      topMatches.foreach(println)
+      val subActor = subActors(index)
+
+      readySubActors.remove(subActor)
+      subActors.remove(index)
+
+      context.stop(subActor)
+
+      log(s"SubActor ${subActor.path.name} removed")
     }
   }
 
-  def isAllDataDownloaded() = {
-    if (actorsToProducts.size != subActors.size)
-      log("MainActor is waiting for data")
+  def setSubActorReady(): Unit = {
+    readySubActors.update(sender, true)
+
+    log(s"SubActor ${sender.path.name} is ready")
+  }
+
+  def countReadyActors(): Unit = {
+    val readySubActors = getReadySubActors.size
+
+    log(s"Ready $readySubActors of ${subActors.size} actors")
+  }
+
+  def listSubActors(): Unit = {
+    readySubActors.foreach(p => log(s"${p._1.path.name} is ready: ${p._2}"))
+  }
+
+  def getSubActors() = {
+    sender ! readySubActors.map(p => s"${p._1.path.name} is ready: ${p._2}").toList
+  }
+
+  def searchByProductInfo(product: ProductInfo): Unit = {
+    bestMatchesFromSubActors.clear()
+    getReadySubActors.foreach(_ ! SearchByProductInfo(product))
+  }
+
+  def searchByStringQuery(text: String): Unit = {
+    bestMatchesFromSubActors.clear()
+    getReadySubActors.foreach(_ ! SearchByStringQuery(text))
+  }
+
+  /*def searchByStringQueryBlock(text: String): Unit = {
+    bestMatchesFromSubActors.clear()
+    val listFuturesBestMatches = getReadySubActors.map(act => ask(act, SearchByStringQuery(text)).mapTo[CollectBestMatches]).toList
+    val futureListBestMatches = Future.sequence(listFuturesBestMatches)
+    val listBestMatches = Await.result(futureListBestMatches, timeout.duration)
+  }*/
+
+  private def getReadySubActors: collection.Set[ActorRef] = {
+    readySubActors.filter(_._2).keySet
+  }
+
+
+  def collectBestMatches(bestMatches: Seq[(ProductInfo, Double)]): Unit = {
+    bestMatchesFromSubActors += (sender -> bestMatches)
+    if (getReadySubActors.size == bestMatchesFromSubActors.size)
+      displayBestMatches()
+  }
+
+  private def displayBestMatches(): Unit = {
+    val bestMatches: immutable.Seq[(ProductInfo, Double)] = bestMatchesFromSubActors.flatMap(_._2).toList
+      .sortWith(_._2 > _._2)
+      .take(5)
+
+    if (bestMatches.isEmpty)
+      log(s"No results found!")
     else
-    log("MainActor got all data")
+      bestMatches.foreach(p => log(p._1.toString))
   }
 
-  def showProductsInfo() = {
-    log("Printing products")
-    actorsToProducts.foreach {
-      case (actorRef, productsInfo) => log(actorRef.path.name, productsInfo.map(_.productsInfo).toString)
-    }
-
-    log("Sorted Data: ", actorsToProducts.flatMap(_._2).flatMap(_.productsInfo).toList.sortBy(_.linkPage).toString)
-  }
-
-  def getProductsInfo() = {
-    sender ! actorsToProducts.flatMap(_._2).flatMap(_.productsInfo).toList.sortBy(_.linkPage)
-  }
-
-  def showCurrentProducts() = {
-    actorsToProducts.flatMap(_._2).flatMap(_.productsInfo).foreach(println)
-  }
-
-  def updateLocalBase() = {
+  def updateLocalBase(): Unit = {
     val xKomClient = new XKomClient(false)
     createDirectories()
     val writer = new PrintWriter(FileManager.linksFile)
@@ -124,10 +146,10 @@ class MainActor (val numberOfSubActors: Int) extends Actor {
       })
       .toList.toMap
     writer.close()
-    println(s"Saved ${categoryToProducts.size} links to categories and ${categoryToProducts.values.flatten.size} links to products")
+    log(s"Saved ${categoryToProducts.size} links to categories and ${categoryToProducts.values.flatten.size} links to products")
   }
 
-  private def createDirectories() = {
+  private def createDirectories(): Boolean = {
     new File(FileManager.mainFolder).mkdir()
     new File(FileManager.productsFolder).mkdir()
     new File(FileManager.linksFile).createNewFile()

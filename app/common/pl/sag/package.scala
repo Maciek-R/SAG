@@ -1,21 +1,29 @@
 package pl
 
-import pl.sag.product.{ProductInfo, ProductsInfo}
+import pl.sag.product.ProductInfo
 
 package object sag {
 
-  case object StartCollectingData
-  case object StartCollectingDataBlock
-  case object CollectData
-  case object CollectDataBl
-  case class GetBestMatches(productUrl: String)
-  case class GetBestMatchesBl(productUrl: String)
-  case class SendCollectedProductsInfoToMainActor(productsInfo: ProductsInfo)
-  case class SendBestMatchesToMainActor(topMatches: Seq[(ProductInfo, Double)])
-  case object ShowProductsInfo
-  case object GetProductsInfo
+  // From controller to MainActor
+  case object CreateSubActor
+  case class RemoveSubActor(index: Int)
+  case object CountReadySubActors
+  case object ListSubActors
+  case object GetSubActors
+
   case object TerminateChildren
-  case object CheckIfGotAllMessages
-  case object ShowCurrentLinksAndImgsOfProducts
   case object UpdateLocalBaseCategoriesAndProductsLinks
+
+  // From MainActor to SubActors
+  case object BuildModel
+  case object SubActorIsReady
+
+
+  // From SubActors to MainActor
+  case class CollectBestMatches(bestMatches: Seq[(ProductInfo, Double)])
+
+  // Common
+  case class SearchByStringQuery(text: String)
+  case class SearchByStringQueryBlock(text: String)
+  case class SearchByProductInfo(product: ProductInfo)
 }
