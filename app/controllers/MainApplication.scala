@@ -41,10 +41,10 @@ class MainApplication @Inject()(cc: ControllerComponents, actorSystem: ActorSyst
 
   def getBestMatches = Action {
     implicit val timeout = Timeout(30 seconds)
-    val url = ""//TODO
-    val futureSubActors: Future[List[String]] = ask(mainActor, SearchByStringQueryBlock(url)).mapTo[List[String]]
-    val subActors = Await.result(futureSubActors, timeout.duration)
-    Ok("")
+    val url = "laptop"
+    val futureBestMatches: Future[List[CollectBestMatches]] = ask(mainActor, SearchByStringQueryBlock(url)).mapTo[List[CollectBestMatches]]
+    val bestMatches = Await.result(futureBestMatches, timeout.duration)
+    Ok(bestMatches.map(_.bestMatches).toString())
   }
 
   /*def start = Action {

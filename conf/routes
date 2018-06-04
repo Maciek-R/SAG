@@ -15,6 +15,7 @@ GET     /assets/*file               controllers.Assets.versioned(file)
 GET     /hello                      controllers.MainApplication.hello
 GET     /createSubActor             controllers.MainApplication.createSubActor
 GET     /getSubActors               controllers.MainApplication.getSubActors
+GET     /getBestMatches             controllers.MainApplication.getBestMatches
 #GET     /start                      controllers.MainApplication.start
 #GET     /check                      controllers.MainApplication.check
 #GET     /update                     controllers.MainApplication.updateLocalBase

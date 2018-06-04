@@ -13,6 +13,10 @@ import scala.collection.{immutable, mutable}
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
+import pl.sag.product.{ProductInfo, ProductsInfo}
+import scala.concurrent._
+import scala.concurrent._
+import ExecutionContext.Implicits.global
 
 import scala.concurrent.{Await, Future}
 
@@ -38,7 +42,7 @@ class MainActor extends Actor {
 
     case SearchByProductInfo(product: ProductInfo) => searchByProductInfo(product)
     case SearchByStringQuery(text: String) => searchByStringQuery(text)
-    //case SearchByStringQueryBlock(text: String) => searchByStringQueryBlock(text)
+    case SearchByStringQueryBlock(text: String) => searchByStringQueryBlock(text)
 
     case CollectBestMatches(bestMatches) => collectBestMatches(bestMatches)
 
@@ -103,12 +107,13 @@ class MainActor extends Actor {
     getReadySubActors.foreach(_ ! SearchByStringQuery(text))
   }
 
-  /*def searchByStringQueryBlock(text: String): Unit = {
+  def searchByStringQueryBlock(text: String): Unit = {
     bestMatchesFromSubActors.clear()
     val listFuturesBestMatches = getReadySubActors.map(act => ask(act, SearchByStringQuery(text)).mapTo[CollectBestMatches]).toList
     val futureListBestMatches = Future.sequence(listFuturesBestMatches)
     val listBestMatches = Await.result(futureListBestMatches, timeout.duration)
-  }*/
+    sender ! listBestMatches
+  }
 
   private def getReadySubActors: collection.Set[ActorRef] = {
     readySubActors.filter(_._2).keySet
