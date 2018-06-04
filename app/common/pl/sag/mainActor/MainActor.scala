@@ -3,26 +3,35 @@ package pl.sag.mainActor
 import java.io.{File, PrintWriter}
 
 import akka.actor.{Actor, ActorRef, Props}
-import javax.inject.Inject
+import akka.pattern.ask
+import akka.util.Timeout
 import pl.sag.Logger._
 import pl.sag._
 import pl.sag.product.{ProductInfo, ProductsInfo}
 import pl.sag.subActor.SubActor
 import pl.sag.utils.{FileManager, XKomClient}
-
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration._
 import scala.collection.mutable
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
+import scala.concurrent._
+import ExecutionContext.Implicits.global
 
 
 class MainActor (val numberOfSubActors: Int) extends Actor {
 
+  implicit val timeout = Timeout(50 seconds)
   private var subActors = mutable.Buffer[ActorRef]()
   private val actorsToProducts = mutable.HashMap[ActorRef, Option[ProductsInfo]]()
 
   override def receive: Receive = {
     case StartCollectingData => startCollectingData()
+    case StartCollectingDataBlock => startCollectingDataBlock()
     case SendCollectedProductsInfoToMainActor(productsInfo) => saveProductsInfo(productsInfo)
     case SendBestMatchesToMainActor(topMatches) => displayBestMatches(topMatches)
     case GetBestMatches(productUrl) => getBestMatches(productUrl)
+    case GetBestMatchesBl(productUrl) => getBestMatchesBl(productUrl)
     case ShowProductsInfo => showProductsInfo()
     case GetProductsInfo => getProductsInfo()
     case TerminateChildren => subActors.foreach(context.stop)
@@ -43,8 +52,25 @@ class MainActor (val numberOfSubActors: Int) extends Actor {
     subActors.foreach(_ ! CollectData)
   }
 
+  def startCollectingDataBlock() = {
+    for (_ <- 0 until numberOfSubActors)
+      createSubActor()
+    log("Starting collecting data for " + subActors.length + " subActors.")
+    val futureProductsInfo = subActors.map(act => ask(act, CollectDataBl).mapTo[ProductsInfo]).toList
+    val productInfos = Future.sequence(futureProductsInfo)
+    val productsInfos = Await.result(productInfos, timeout.duration)
+    sender ! productsInfos
+  }
+
   def getBestMatches(productUrl: String) = {
     subActors.foreach(_ ! GetBestMatches(productUrl))
+  }
+
+  def getBestMatchesBl(productUrl: String) = {
+    val listFuturesBestMatches = subActors.map(act => ask(act, GetBestMatches(productUrl)).mapTo[SendBestMatchesToMainActor]).toList
+    val bestMatchesFutureList = Future.sequence(listFuturesBestMatches)
+    val bestMatches = Await.result(bestMatchesFutureList, timeout.duration)
+    sender ! bestMatches
   }
 
   def saveProductsInfo(productsInfo: ProductsInfo) = {
