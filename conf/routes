@@ -16,4 +16,5 @@ GET     /hello                      controllers.MainApplication.hello
 GET     /start                      controllers.MainApplication.start
 GET     /check                      controllers.MainApplication.check
 GET     /update                     controllers.MainApplication.updateLocalBase
+GET     /getProductsInfo            controllers.MainApplication.getProductsInfo
 

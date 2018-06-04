@@ -10,6 +10,7 @@ package object sag {
   case class SendCollectedProductsInfoToMainActor(productsInfo: ProductsInfo)
   case class SendBestMatchesToMainActor(topMatches: Seq[(ProductInfo, Double)])
   case object ShowProductsInfo
+  case object GetProductsInfo
   case object TerminateChildren
   case object CheckIfGotAllMessages
   case object ShowCurrentLinksAndImgsOfProducts

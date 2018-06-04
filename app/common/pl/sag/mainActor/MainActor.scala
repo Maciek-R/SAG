@@ -24,6 +24,7 @@ class MainActor (val numberOfSubActors: Int) extends Actor {
     case SendBestMatchesToMainActor(topMatches) => displayBestMatches(topMatches)
     case GetBestMatches(productUrl) => getBestMatches(productUrl)
     case ShowProductsInfo => showProductsInfo()
+    case GetProductsInfo => getProductsInfo()
     case TerminateChildren => subActors.foreach(context.stop)
     case CheckIfGotAllMessages => isAllDataDownloaded()
     case ShowCurrentLinksAndImgsOfProducts => showCurrentProducts()
@@ -73,6 +74,10 @@ class MainActor (val numberOfSubActors: Int) extends Actor {
     }
 
     log("Sorted Data: ", actorsToProducts.flatMap(_._2).flatMap(_.productsInfo).toList.sortBy(_.linkPage).toString)
+  }
+
+  def getProductsInfo() = {
+    sender ! actorsToProducts.flatMap(_._2).flatMap(_.productsInfo).toList.sortBy(_.linkPage)
   }
 
   def showCurrentProducts() = {
