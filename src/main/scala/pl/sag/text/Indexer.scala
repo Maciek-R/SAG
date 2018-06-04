@@ -19,11 +19,11 @@ case class TfidfVector(private val data: Map[String, Double], product: Option[Pr
 
   def apply(word: String): Double = data.getOrElse(word, 0)
 
-  def commonWordsWith(other: TfidfVector) = data.keySet.intersect(other.data.keySet)
+  def commonWordsWith(other: TfidfVector): Set[String] = data.keySet.intersect(other.data.keySet)
 }
 
 class IndexedDocuments(documentsSpace: Seq[WordVector], docsContainingWord: Map[String, Set[ProductInfo]]) {
-  val docCount = documentsSpace.size
+  val docCount: Int = documentsSpace.size
   val documentsAsTfidfSpace: Seq[TfidfVector] = documentsSpace.map(wordVectorToTfIdfVector)
 
   def wordVectorToTfIdfVector(wordVector: WordVector): TfidfVector = {
@@ -61,7 +61,7 @@ class IndexedDocuments(documentsSpace: Seq[WordVector], docsContainingWord: Map[
     (vec.product.get, numerator / denominator)
   }
 
-  def search(sentence: Traversable[String], topN: Int) = {
+  def search(sentence: Traversable[String], topN: Int): Seq[(ProductInfo, Double)] = {
     val queryTfidfVector = wordVectorToTfIdfVector(WordVector(sentence, None))
     val scoredDocuments: Seq[(ProductInfo, Double)] = documentsAsTfidfSpace.map(compareWithQuery(queryTfidfVector))
     scoredDocuments

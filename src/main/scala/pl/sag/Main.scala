@@ -10,24 +10,26 @@ object Main extends App {
 
   val system = ActorSystem("MainSystem")
 
-  val mainActor = system.actorOf(Props(new MainActor(5)), "MainActor")
+  val mainActor = system.actorOf(Props(new MainActor()), "MainActor")
 
   var line = ""
   do {
-    println("1. Rozpocznij zbieranie danych")
-    println("2. Sprawdz czy odebrano wszystkie dane od podaktorów")
-    println("3. Pokaż aktualnie otrzymane dane o produktach")
-    println("5. Zaktualizuj lokalną bazę linków")
-    println("6. Pokaż najlepsze dopasowania(podaj link)")
+    println("1. Stwórz aktora")
+    println("2. Usuń aktora(index)")
+    println("3. Pokaż ile aktorów jest gotowych")
+    println("4. Wylistuj podaktorów")
+    println("5. Wyszukaj produkty(wpisz frazę)")
+    println("6. Zaktualizuj lokalną bazę linków")
     println("0. Wyjscie")
     print(">>")
     line = StdIn.readLine()
     line match {
-      case "1" => mainActor ! StartCollectingData
-      case "2" => mainActor ! CheckIfGotAllMessages
-      case "3" => mainActor ! ShowCurrentLinksAndImgsOfProducts
-      case "5" => mainActor ! UpdateLocalBaseCategoriesAndProductsLinks
-      case "6" => mainActor ! GetBestMatches(StdIn.readLine())
+      case "1" => mainActor ! CreateSubActor
+      case "2" => mainActor ! RemoveSubActor(StdIn.readLine().toInt)
+      case "3" => mainActor ! CountReadySubActors
+      case "4" => mainActor ! ListSubActors
+      case "5" => mainActor ! SearchByStringQuery(StdIn.readLine())
+      case "6" => mainActor ! UpdateLocalBaseCategoriesAndProductsLinks
       case _ =>
     }
   } while (line != "quit" && line != "0")
