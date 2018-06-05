@@ -18,7 +18,7 @@ class MainApplication @Inject()(cc: ControllerComponents, actorSystem: ActorSyst
                                (implicit exec: ExecutionContext, assetsFinder: AssetsFinder)
   extends AbstractController(cc) {
 
-  val mainActor: ActorRef = actorSystem.actorOf(Props(new MainActor()), "MainActor")
+  val mainActor: ActorRef = actorSystem.actorOf(Props[MainActor].withDispatcher("control-aware-dispatcher"), "MainActor")
 
   var currentProduct: ProductInfo = _
   var bestMatches: List[ProductInfo] = List[ProductInfo]()

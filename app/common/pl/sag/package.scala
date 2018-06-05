@@ -1,5 +1,6 @@
 package pl
 
+import akka.dispatch.ControlMessage
 import pl.sag.product.ProductInfo
 
 package object sag {
@@ -8,7 +9,7 @@ package object sag {
   case object CreateSubActor
   case class RemoveSubActor(index: Int)
   case object CountReadySubActors
-  case object ListSubActors
+  case object ListSubActors extends ControlMessage
 
   case object TerminateChildren
   case object UpdateLocalBaseCategoriesAndProductsLinks
