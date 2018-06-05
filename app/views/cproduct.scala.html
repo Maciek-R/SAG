@@ -1,0 +1,15 @@
+@import pl.sag.product.ProductInfo
+@(currentProduct: ProductInfo)
+
+@if(currentProduct != null){
+    <h3>@currentProduct.title.get</h3>
+    <img src="@currentProduct.imageUrl.get" height="200" width="200"></br>
+
+    <details>
+        <summary>Description</summary>
+        <p>@currentProduct.description.get</p>
+    </details>
+
+    <a href="@currentProduct.linkPage">@currentProduct.linkPage</a>
+}
+

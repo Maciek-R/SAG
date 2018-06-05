@@ -3,22 +3,14 @@
 # ~~~~
 
 # An example controller showing a sample home page
-GET     /                           controllers.HomeController.index
-# An example controller showing how to use dependency injection
-GET     /count                      controllers.CountController.count
-# An example controller showing how to write asynchronous code
-GET     /message                    controllers.AsyncController.message
+GET        /                         controllers.MainApplication.index
 
 # Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.versioned(file)
+GET        /assets/*file             controllers.Assets.versioned(file)
 
-GET     /hello                      controllers.MainApplication.hello
-GET     /createSubActor             controllers.MainApplication.createSubActor
-GET     /getSubActors               controllers.MainApplication.getSubActors
-GET     /getBestMatches             controllers.MainApplication.getBestMatches
-#GET     /start                      controllers.MainApplication.start
-#GET     /check                      controllers.MainApplication.check
-#GET     /update                     controllers.MainApplication.updateLocalBase
-#GET     /getProductsInfo            controllers.MainApplication.getProductsInfo
-#GET     /getBestMatches            controllers.MainApplication.getBestMatches
+GET        /create                   controllers.MainApplication.create
+GET        /remove/*index            controllers.MainApplication.remove(index)
+GET        /refresh                  controllers.MainApplication.refresh
+GET        /searchString             controllers.MainApplication.searchString(query: Option[String])
+GET        /setProduct/*index        controllers.MainApplication.setProduct(index)
 

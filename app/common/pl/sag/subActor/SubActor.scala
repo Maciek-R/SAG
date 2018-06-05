@@ -13,7 +13,7 @@ class SubActor extends Actor {
   private val random = new Random
   val xKomClient = new XKomClient(true)
 
-  val numberOfProducts = 30
+  val numberOfProducts = 50
   val numberOfBestMatches = 5
 
   var model: IndexedDocuments = _

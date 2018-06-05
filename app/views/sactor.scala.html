@@ -1,0 +1,7 @@
+@(subActor: (String, Boolean), index: Int)
+
+<p>
+    @index: @subActor._1 - <b @if(subActor._2) {
+    class="green"> ready }@if(!subActor._2) { class="darkred"> building }</b>
+    <a href="/remove/@index" title="Remove sub-actor"><b class="red">X</b></a>
+</p>

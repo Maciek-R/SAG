@@ -36,13 +36,11 @@ class MainActor extends Actor {
     case RemoveSubActor(index) => removeSubActor(index)
     case CountReadySubActors => countReadyActors()
     case ListSubActors => listSubActors()
-    case GetSubActors => getSubActors()
 
     case SubActorIsReady => setSubActorReady()
 
     case SearchByProductInfo(product: ProductInfo) => searchByProductInfo(product)
     case SearchByStringQuery(text: String) => searchByStringQuery(text)
-    case SearchByStringQueryBlock(text: String) => searchByStringQueryBlock(text)
 
     case CollectBestMatches(bestMatches) => collectBestMatches(bestMatches)
 
@@ -64,7 +62,7 @@ class MainActor extends Actor {
 
   def removeSubActor(index: Int): Unit = {
     if (index >= subActors.length || index < 0)
-      log(s"Wrong index $index")
+      log(s"Wrong index $index ${subActors.length}")
     else {
       val subActor = subActors(index)
 
@@ -78,36 +76,37 @@ class MainActor extends Actor {
   }
 
   def setSubActorReady(): Unit = {
-    readySubActors.update(sender, true)
+    if (subActors.contains(sender)) {
+      readySubActors.update(sender, true)
 
-    log(s"SubActor ${sender.path.name} is ready")
+      log(s"SubActor ${sender.path.name} is ready")
+    }
+    else
+      log(s"SubActor ${sender.path.name} is removed!")
   }
 
   def countReadyActors(): Unit = {
     val readySubActors = getReadySubActors.size
 
     log(s"Ready $readySubActors of ${subActors.size} actors")
+
+    sender ! List(readySubActors, subActors.size)
   }
 
   def listSubActors(): Unit = {
-    readySubActors.foreach(p => log(s"${p._1.path.name} is ready: ${p._2}"))
-  }
-
-  def getSubActors() = {
-    sender ! readySubActors.map(p => s"${p._1.path.name} is ready: ${p._2}").toList
+    subActors.foreach(a => log(s"${a.path.name} is ready: ${readySubActors(a)}"))
+    sender ! subActors.map(a => (a.path.name, readySubActors(a))).toList
   }
 
   def searchByProductInfo(product: ProductInfo): Unit = {
     bestMatchesFromSubActors.clear()
-    getReadySubActors.foreach(_ ! SearchByProductInfo(product))
+    val listFuturesBestMatches = getReadySubActors.map(act => ask(act, SearchByProductInfo(product)).mapTo[CollectBestMatches]).toList
+    val futureListBestMatches = Future.sequence(listFuturesBestMatches)
+    val listBestMatches = Await.result(futureListBestMatches, timeout.duration)
+    sender ! listBestMatches
   }
 
   def searchByStringQuery(text: String): Unit = {
-    bestMatchesFromSubActors.clear()
-    getReadySubActors.foreach(_ ! SearchByStringQuery(text))
-  }
-
-  def searchByStringQueryBlock(text: String): Unit = {
     bestMatchesFromSubActors.clear()
     val listFuturesBestMatches = getReadySubActors.map(act => ask(act, SearchByStringQuery(text)).mapTo[CollectBestMatches]).toList
     val futureListBestMatches = Future.sequence(listFuturesBestMatches)
@@ -118,7 +117,6 @@ class MainActor extends Actor {
   private def getReadySubActors: collection.Set[ActorRef] = {
     readySubActors.filter(_._2).keySet
   }
-
 
   def collectBestMatches(bestMatches: Seq[(ProductInfo, Double)]): Unit = {
     bestMatchesFromSubActors += (sender -> bestMatches)

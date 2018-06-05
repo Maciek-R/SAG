@@ -1,0 +1,47 @@
+@import pl.sag.product.ProductInfo
+@(currentProduct: ProductInfo, subActors: List[(String, Boolean)], bestMatches: List[ProductInfo])
+
+<section id="top">
+    <div class="wrapper">
+        <h1>Xkom Recomendation System</h1>
+    </div>
+</section>
+
+<div id="content" class="wrapper doc">
+    <article>
+        <h3>Search</h3>
+        <form action="/searchString">
+            <input type="text" name="query" id="query" placeholder="laptop, komputer ...">
+            <input type="submit" value="Search" />
+        </form>
+        <hr>
+
+        <h1>Current Product</h1>
+        @cproduct(currentProduct)
+        <hr>
+
+        <h1>Recommendations</h1>
+        @if(bestMatches.length == 0) {
+            <h3>No results.</h3>
+        }
+        @if(bestMatches.length > 0) {
+            @for(index <- bestMatches.indices) {
+                @rproduct(bestMatches(index), index)
+            }
+        }
+    </article>
+
+    <aside>
+        <h3>SubActors</h3>
+        @for(index <- subActors.indices) {
+            @sactor(subActors(index), index)
+        }
+
+        <p>
+            <a href="/create" title="Create sub-actor"><b class="green">Add</b></a>
+            <a href="/refresh" title="Refresh sub-actors"><b class="green">Refresh</b></a>
+        </p>
+
+    </aside>
+
+</div>

@@ -9,7 +9,6 @@ package object sag {
   case class RemoveSubActor(index: Int)
   case object CountReadySubActors
   case object ListSubActors
-  case object GetSubActors
 
   case object TerminateChildren
   case object UpdateLocalBaseCategoriesAndProductsLinks
@@ -24,6 +23,5 @@ package object sag {
 
   // Common
   case class SearchByStringQuery(text: String)
-  case class SearchByStringQueryBlock(text: String)
   case class SearchByProductInfo(product: ProductInfo)
 }

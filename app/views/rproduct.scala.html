@@ -1,0 +1,10 @@
+@import pl.sag.product.ProductInfo
+@(currentProduct: ProductInfo, index: Int)
+<a href="/setProduct/@index"><p>
+@if(currentProduct != null) {
+    <img src="@currentProduct.imageUrl.get" height="50" width="50">
+    <b>@currentProduct.title.get</b>
+}
+</p></a>
+<hr>
+
